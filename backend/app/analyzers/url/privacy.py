@@ -5,6 +5,17 @@ from app.analyzers.url.features import domain
 from app.schemas.evidence import finding
 
 
+def disabled_control(field):
+    if field.has_attr('disabled') or field.get('aria-disabled') == 'true':
+        return True
+    # HTML disables descendant controls except those inside the first legend.
+    for parent in field.find_parents('fieldset', disabled=True):
+        legend = parent.find('legend', recursive=False)
+        if legend is None or legend not in field.parents:
+            return True
+    return False
+
+
 def describe_field(field, soup):
     """Read accessible question labels; never capture submitted values."""
     parts = [str(field.get(key, '')) for key in ('name', 'id', 'autocomplete', 'aria-label', 'placeholder')]
@@ -58,7 +69,7 @@ def inspect_collection(soup, url, asset):
             if field.get('type','').lower() in {'hidden','submit','button','reset'} or (field.get('form') and field.get('form') != form.get('id')):
                 continue
             detected,description=describe_field(field,soup)
-            description['disabled'] = field.has_attr('disabled') or field.get('aria-disabled') == 'true'
+            description['disabled'] = disabled_control(field)
             displayed_kinds.update(detected)
             if description not in inventory: inventory.append(description)
             if not description['disabled']: kinds.update(detected)
@@ -69,7 +80,7 @@ def inspect_collection(soup, url, asset):
         if form.get('id'):
             buttons += [b for b in soup.select('button[form][formaction],input[form][formaction]') if b.get('form') == form['id']]
         for button in buttons[:10]:
-            if button.has_attr('disabled') or (button.get('form') and button.get('form') != form.get('id')):
+            if disabled_control(button) or (button.get('form') and button.get('form') != form.get('id')):
                 continue
             target_action = button['formaction'].strip()
             targets.append((urljoin(base, target_action) if target_action else url, button.get('formmethod', form.get('method', 'get')).lower()))

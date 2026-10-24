@@ -3,6 +3,7 @@
 import asyncio
 import ipaddress
 import socket
+import zlib
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit, urlunsplit
 import aiohttp
@@ -11,6 +12,27 @@ from aiohttp.abc import AbstractResolver
 
 class UnsafeURL(ValueError):
     pass
+
+
+class BoundedBody:
+    """Bound both transferred and expanded bytes, including gzip responses."""
+    def __init__(self, encoding, limit):
+        self.limit=limit;self.transferred=0;self.body=bytearray()
+        encoding=encoding.strip().lower()
+        if encoding not in {'identity','gzip','deflate'}:raise UnsafeURL('Unsupported HTTP content encoding')
+        self.decoder=zlib.decompressobj(31 if encoding=='gzip' else 15) if encoding!='identity' else None
+
+    def feed(self, block):
+        self.transferred+=len(block)
+        if self.transferred>self.limit:raise UnsafeURL('Response exceeds download limit')
+        data=self.decoder.decompress(block,self.limit-len(self.body)+1) if self.decoder else block
+        self.body.extend(data)
+        if len(self.body)>self.limit:raise UnsafeURL('Expanded response exceeds download limit')
+
+    def finish(self):
+        if self.decoder and (not self.decoder.eof or self.decoder.unused_data):
+            raise UnsafeURL('Incomplete or trailing compressed response')
+        return bytes(self.body)
 
 
 def normalize_url(value: str) -> str:
@@ -132,14 +154,9 @@ async def fetch(url: str, max_bytes: int = 10 * 1024 * 1024) -> FetchResult:
                         current = target
                         continue
                     response.raise_for_status()
-                    if (
-                        response.headers.get("Content-Encoding", "identity")
-                        != "identity"
-                    ):
-                        raise UnsafeURL("Compressed HTTP response rejected")
                     if response.content_length and response.content_length > max_bytes:
                         raise UnsafeURL("Response exceeds download limit")
-                    body = bytearray()
+                    body = BoundedBody(response.headers.get('Content-Encoding','identity'), max_bytes)
                     connection = getattr(response, "connection", None)
                     transport = getattr(connection, "transport", None)
                     ssl_object = (
@@ -147,12 +164,10 @@ async def fetch(url: str, max_bytes: int = 10 * 1024 * 1024) -> FetchResult:
                     )
                     certificate = ssl_object.getpeercert() if ssl_object else None
                     async for block in response.content.iter_chunked(65536):
-                        body.extend(block)
-                        if len(body) > max_bytes:
-                            raise UnsafeURL("Response exceeds download limit")
+                        body.feed(block)
                     return FetchResult(
                         current,
-                        bytes(body),
+                        body.finish(),
                         response.content_type,
                         redirects,
                         response.status,

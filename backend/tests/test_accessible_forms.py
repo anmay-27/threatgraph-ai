@@ -34,3 +34,14 @@ def test_disabled_preview_questions_are_inventory_not_active_submission():
     assert form['displayed_field_types']==['phone']
     assert form['fields'][0]['disabled'] is True
     assert not any(e.score is not None for e in evidence)
+
+def test_disabled_fieldset_cannot_create_secret_submission_finding():
+    html=b'<form action="http://other.example" method="get"><fieldset disabled><input type="password"><button formaction="https://third.example">Send</button></fieldset></form>'
+    page,evidence,_=inspect_page(html,'https://example.com','a')
+    assert page['data_collection']['forms'][0]['field_types']==[]
+    assert not any(e.label in {'credential_destination_mismatch','sensitive_data_in_url','unencrypted_data_submission'} for e in evidence)
+
+def test_first_legend_exception_remains_active():
+    html=b'<form action="http://other.example"><fieldset disabled><legend><input type="password"></legend></fieldset></form>'
+    _,evidence,_=inspect_page(html,'https://example.com','a')
+    assert any(e.label=='credential_destination_mismatch' for e in evidence)
