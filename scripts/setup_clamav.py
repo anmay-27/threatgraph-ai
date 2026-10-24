@@ -29,7 +29,7 @@ def main():
     bin_dir=next(TARGET.rglob('clamd.exe')).parent
     database=TARGET/'database';database.mkdir(exist_ok=True)
     (TARGET/'freshclam.conf').write_text(f'DatabaseDirectory "{database}"\nDatabaseMirror database.clamav.net\nUpdateLogFile "{TARGET / "freshclam.log"}"\n',encoding='utf-8')
-    (TARGET/'clamd.conf').write_text(f'DatabaseDirectory "{database}"\nTCPSocket 3310\nTCPAddr 127.0.0.1\nLogFile "{TARGET / "clamd.log"}"\nStreamMaxLength 30M\nMaxScanSize 100M\nMaxFileSize 30M\nMaxRecursion 10\n',encoding='utf-8')
+    (TARGET/'clamd.conf').write_text(f'DatabaseDirectory "{database}"\nTCPSocket 3310\nTCPAddr 127.0.0.1\nLogFile "{TARGET / "clamd.log"}"\nStreamMaxLength 260M\nMaxScanSize 300M\nMaxFileSize 260M\nMaxRecursion 10\n',encoding='utf-8')
     (TARGET/'install.json').write_text(json.dumps({'version':VERSION,'source':url,'sha256':hashlib.sha256(archive.read_bytes()).hexdigest(),'bin_dir':str(bin_dir)},indent=2))
     print(str(bin_dir/'freshclam.exe'),flush=True)
 

@@ -20,8 +20,9 @@ def daemon_status(host: str) -> dict:
 
 
 def scan_daemon(path: Path, host: str) -> tuple[bool, str]:
-    deadline = time.monotonic() + 30
+    deadline = time.monotonic() + 120
     with socket.create_connection((host, 3310), timeout=5) as client:
+        client.settimeout(120)
         client.sendall(b"zINSTREAM\0")
         with path.open("rb") as file:
             while block := file.read(65536):

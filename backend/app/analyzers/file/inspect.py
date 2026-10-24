@@ -12,6 +12,15 @@ from app.core.config import settings
 
 
 def detect_mime(data: bytes) -> str:
+    if data.startswith(b'PK'):
+        try:
+            with zipfile.ZipFile(io.BytesIO(data)) as archive:
+                names = set(archive.namelist())
+                for marker, subtype in [('word/document.xml','wordprocessingml.document'),('xl/workbook.xml','spreadsheetml.sheet'),('ppt/presentation.xml','presentationml.presentation')]:
+                    if '[Content_Types].xml' in names and marker in names:
+                        return 'application/vnd.openxmlformats-officedocument.' + subtype
+        except zipfile.BadZipFile:
+            pass
     kind = filetype.guess(data)
     if kind:
         return kind.mime
@@ -53,9 +62,11 @@ def inspect_file(path: Path, name: str, asset: str):
         )
     ]
     expected = mimetypes.guess_type(name)[0]
+    aliases = {'video/avi':'video/x-msvideo', 'video/msvideo':'video/x-msvideo', 'audio/x-wav':'audio/wav', 'audio/wave':'audio/wav'}
+    expected = aliases.get(expected, expected)
     if (
         expected
-        and expected != mime
+        and expected != aliases.get(mime, mime)
         and not (expected.startswith("text/") and mime.startswith("text/"))
     ):
         evidence.append(

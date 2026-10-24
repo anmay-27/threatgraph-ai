@@ -9,6 +9,8 @@ def investigation_checks(assets, evidence):
         flags = [e for e in completed if e.score is not None and e.score >= .5 and e.category not in {'synthetic_media', 'manipulation'} and e.metadata.get('risk_eligible') is not False]
         status = 'findings' if flags else 'partial' if completed and missing else 'unavailable' if missing else 'completed' if completed else 'not_checked'
         checks.append(dict(id=key, title=title, status=status, summary=f'{len(flags)} finding(s) need review' if flags else success if completed else 'Check could not complete' if missing else 'No result available for this check', evidence_ids=[e.id for e in items], limitations=limitation, unavailable_reasons=list(dict.fromkeys(e.explanation for e in missing))))
+    if any(e.source == 'document_inspector' for e in evidence):
+        add('document','Document text & active content',[e for e in evidence if e.source == 'document_inspector'],'Bounded structural inspection. Document claims, authorship and signature authenticity are not verified. Macros and scripts are never executed.','Document text, links and active-content markers inspected')
     if 'url' in kinds or 'webpage' in kinds:
         from app.core.config import settings
         if settings.enable_browser_inspection:

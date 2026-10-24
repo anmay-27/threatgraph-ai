@@ -285,28 +285,14 @@ class Investigation:
                 if url:
                     for link, relation in assets:
                         await self.url(link, node, relation, depth + 1)
-            elif mime == "application/pdf":
-                import fitz
-                import numpy as np
-
-                with fitz.open(path) as document:
-                    if len(document) > 10:
-                        self.issue(
-                            node, "pdf", "Only the first 10 PDF pages were inspected."
-                        )
-                    for page in list(document)[:10]:
-                        await self.text(page.get_text()[:20000], node, depth)
-                        scale = min(1.5, 1800 / max(page.rect.width, page.rect.height))
-                        pix = page.get_pixmap(
-                            matrix=fitz.Matrix(scale, scale), colorspace=fitz.csRGB
-                        )
-                        urls.extend(
-                            decode_qr(
-                                np.frombuffer(pix.samples, dtype=np.uint8).reshape(
-                                    pix.height, pix.width, 3
-                                )
-                            )
-                        )
+            elif mime == "application/pdf" or "officedocument" in mime or "macroEnabled" in mime:
+                from app.analyzers.file.document import inspect_document
+                text, found, document_links = inspect_document(path, mime, node)
+                self.evidence.extend(found)
+                if text.strip():
+                    self.evidence.extend(inspect_message(text, node))
+                urls.extend(value for item in found if item.label == 'document_summary' for value in item.metadata.get('qr_values', []))
+                # Declared hyperlinks are recorded; never fetched just by uploading a document.
             elif mime.startswith("text/") or name.lower().endswith(".txt"):
                 await self.text(
                     path.read_bytes()[:100000].decode("utf-8", errors="replace"),

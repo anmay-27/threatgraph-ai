@@ -189,6 +189,16 @@ def render_pdf(title, identifier, analyses, entities=(), timeline=(), feedback_b
             heading('Unresolved checks')
             for gap in summary['gaps']: line('- ' + gap)
         feedback = (feedback_by_analysis or {}).get(row["id"], [])
+        for item in r.get('evidence', []):
+            if item.get('label') != 'document_summary': continue
+            heading('Document investigation')
+            line(item['explanation'])
+            meta = item.get('metadata', {})
+            heading('Extracted text preview')
+            line(meta.get('text_preview') or 'No readable text extracted; scanned content may need OCR.')
+            for link in meta.get('links', []): line('Declared link (not opened): ' + link)
+            for gap in meta.get('limitations', []): line('Coverage gap: ' + gap)
+            line('Next steps: verify the sender and document claims; review active-content findings and malware scan coverage before enabling macros or opening embedded objects.')
         if feedback:
             heading("Investigator feedback - not model output")
             line("Reviewer statement, not independently verified by ThreatGraph. Feedback does not change the saved detector score or retrain the model.")

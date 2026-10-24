@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     enable_external_reputation: bool = False
     urlhaus_auth_key: str = ""
     phishtank_api_key: str = ""
-    max_upload_mb: int = 25
+    max_upload_mb: int = 250
     retention_hours: int = 24
     max_depth: int = 3
     max_nodes: int = 40

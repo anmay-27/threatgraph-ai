@@ -14,6 +14,7 @@ import ImageAssessment from "../components/ImageAssessment";
 import UrlAssessment from "../components/UrlAssessment";
 import SecurityChecks from "../components/SecurityChecks";
 import VideoAssessment from "../components/VideoAssessment";
+import DocumentAssessment from "../components/DocumentAssessment";
 import PrivacyControls from "../components/PrivacyControls";
 import InvestigationContext from "../components/InvestigationContext";
 import JobActions from "../components/JobActions";
@@ -134,6 +135,7 @@ export default function Result() {
           {row.input_type === "video" && (
             <VideoAssessment key={row.id} row={row} />
           )}
+          <DocumentAssessment row={row} />
           <SecurityChecks row={row} />
           <InvestigationContext row={row} />
           <PrivacyControls id={row.id} />
@@ -177,7 +179,7 @@ export default function Result() {
                     ? "COMBINED EVIDENCE INDICATORS"
                     : "OVERALL INDICATOR RISK"}
                 </span>
-                <h2>{r.risk_level}</h2>
+                <h2>{r.risk_score === null ? 'Security verdict not established' : r.risk_level}</h2>
                 <Badge value={r.verdict} />
               </div>
             </div>

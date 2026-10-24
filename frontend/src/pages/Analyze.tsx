@@ -33,7 +33,7 @@ export default function Analyze() {
   const navigate = useNavigate();
   const capabilities = useQuery({ queryKey: ['models'], queryFn: () => api<{name:string; available:boolean; deployment_status?:string}[]>('/models') });
   const health = useQuery({ queryKey: ['scan-health'], queryFn: () => api<{max_upload_mb?:number; malware_scanner?:{available:boolean}}>('/health'), refetchInterval:30000 });
-  const maxUpload = health.data?.max_upload_mb ?? 25;
+  const maxUpload = health.data?.max_upload_mb ?? 250;
   const oversized = !!file && file.size > maxUpload * 1024 * 1024;
   const modality = file?.type.split('/')[0];
   const detector = capabilities.data?.find(model => model.name === modality);
