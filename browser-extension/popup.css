@@ -1,0 +1,19 @@
+*{box-sizing:border-box}
+html{background:#0b1220}
+body{width:360px;min-height:450px;margin:0;padding:24px;background:radial-gradient(circle at 95% 0%,#213860 0,transparent 42%),#0b1220;color:#edf4ff;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1{font-size:21px;letter-spacing:-.5px;margin:0 0 5px}
+h1::before{content:"◇";display:inline-grid;place-items:center;width:31px;height:31px;margin-right:10px;background:#1e3761;color:#9fc1ff;border:1px solid #486894;border-radius:9px}
+p{overflow-wrap:anywhere;margin:12px 0;line-height:1.5}
+body>p:nth-of-type(1){color:#a9bbd6;margin:0 0 20px}
+#url{padding:13px 15px;border:1px solid #385073;border-radius:11px;background:#13213a;color:#cfe2ff;font-size:13px}
+.hint{color:#a6b9d3;font-size:12px}
+label{display:block;color:#c5d7ed;font-size:12px;margin:18px 0 12px}
+input{display:block;width:100%;height:37px;margin-top:6px;padding:8px;background:#121e32;border:1px solid #486386;border-radius:8px;color:#fff;font:inherit}
+input:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #9fc1ff;outline-offset:2px}
+button{width:100%;padding:12px 16px;border:0;border-radius:9px;background:#9dbdff;color:#142133;font:600 14px system-ui;cursor:pointer}
+button:hover{background:#b8d0ff}
+button:disabled{opacity:.6;cursor:not-allowed}
+#status{white-space:pre-wrap;margin-top:17px;min-height:55px;padding:14px;border:1px solid #34506e;border-radius:10px;background:#122237;color:#e4f1ff;overflow-wrap:anywhere}
+#status:empty{display:none}
+a{display:block;color:#b9d4ff;margin-top:16px;text-underline-offset:3px;font-weight:600}
+a[hidden]{display:none}

@@ -1,0 +1,15 @@
+modality: image
+architecture: efficientnet_b0
+classes: {0: real, 1: ai_generated}
+epochs: 4
+batch_size: 16
+lr: 0.001
+seed: 42
+patience: 2
+threads: 4
+freeze_backbone: true
+held_out_generator: Midjourney
+calibration: temperature_scaling
+ood: diagonal_training_embedding_distance
+# CLI arguments are authoritative. CPU plan: EfficientNet-B0, then ConvNeXt-Tiny;
+# at most one additional partial-unfreeze experiment selected by validation only.

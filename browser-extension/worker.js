@@ -1,0 +1,2 @@
+chrome.runtime.onInstalled.addListener(()=>{chrome.contextMenus.create({id:'threatgraph-link',title:'Investigate link with ThreatGraph',contexts:['link']});chrome.contextMenus.create({id:'threatgraph-page',title:'Investigate page with ThreatGraph',contexts:['page']});});
+chrome.contextMenus.onClicked.addListener(async(info,tab)=>{const url=info.linkUrl||tab?.url;if(!/^https?:\/\//i.test(url||''))return;await chrome.storage.session.set({selectedUrl:url});await chrome.action.openPopup();});

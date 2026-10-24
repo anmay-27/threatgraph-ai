@@ -1,0 +1,84 @@
+name: threatgraph-ai
+x-backend: &backend
+  build:
+    context: .
+    dockerfile: docker/backend.Dockerfile
+  environment: &environment
+    DATABASE_URL: postgresql+psycopg://threatgraph:${POSTGRES_PASSWORD:-local-development}@postgres:5432/threatgraph
+    REDIS_URL: redis://redis:6379/0
+    MODEL_DIR: /app/models
+    STORAGE_DIR: /app/storage
+    PRIVACY_MODE: ${PRIVACY_MODE:-true}
+    AUTH_REQUIRED: ${AUTH_REQUIRED:-true}
+    SECURE_COOKIES: ${SECURE_COOKIES:-false}
+    ENABLE_EXTERNAL_REPUTATION: ${ENABLE_EXTERNAL_REPUTATION:-false}
+    URLHAUS_AUTH_KEY: ${URLHAUS_AUTH_KEY:-}
+    MAX_UPLOAD_MB: ${MAX_UPLOAD_MB:-25}
+    RETENTION_HOURS: ${RETENTION_HOURS:-24}
+    ALLOWED_ORIGINS: http://localhost:3000
+    CLAMAV_HOST: ${CLAMAV_HOST:-}
+  volumes:
+    - uploads:/app/storage
+    - ./models:/app/models:ro
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  pids_limit: 256
+  mem_limit: 3g
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: threatgraph
+      POSTGRES_USER: threatgraph
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-development}
+    volumes: [postgres:/var/lib/postgresql/data]
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U threatgraph]
+      interval: 5s
+      retries: 15
+  redis:
+    image: redis:7-alpine
+    command: [redis-server, --appendonly, 'yes']
+    volumes: [redis:/data]
+    healthcheck:
+      test: [CMD, redis-cli, ping]
+      interval: 5s
+      retries: 10
+  backend:
+    <<: *backend
+    ports: [127.0.0.1:8000:8000]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/health')"]
+      interval: 10s
+      start_period: 20s
+      retries: 10
+  worker:
+    <<: *backend
+    command: [celery, -A, app.workers.tasks.celery, worker, --loglevel=info, --concurrency=2]
+    depends_on:
+      backend: {condition: service_healthy}
+  scheduler:
+    <<: *backend
+    command: [celery, -A, app.workers.tasks.celery, beat, --loglevel=info, --schedule=/app/storage/celerybeat-schedule]
+    depends_on:
+      backend: {condition: service_healthy}
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    ports: [127.0.0.1:3000:8080]
+    depends_on:
+      backend: {condition: service_healthy}
+  clamav:
+    image: clamav/clamav:stable
+    profiles: [clamav]
+    ports: [127.0.0.1:3310:3310]
+    volumes: [clamav:/var/lib/clamav]
+volumes:
+  uploads:
+  postgres:
+  redis:
+  clamav:

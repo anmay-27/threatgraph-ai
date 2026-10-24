@@ -1,0 +1,1 @@
+{"seed":42,"models":["logistic_regression","random_forest","hist_gradient_boosting"],"split":"registrable-domain-grouped 60/20/20","calibration":"sigmoid, training-only grouped CV","threshold_grid":[0.3,0.4,0.5,0.6,0.7],"max_configurations":3}

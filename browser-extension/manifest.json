@@ -1,0 +1,10 @@
+{
+  "manifest_version": 3,
+  "name": "ThreatGraph Investigator",
+  "version": "0.1.0",
+  "description": "Explicitly submit the current page or a selected link to your local ThreatGraph workspace.",
+  "permissions": ["activeTab", "contextMenus", "storage"],
+  "host_permissions": ["http://127.0.0.1:8000/*"],
+  "action": {"default_popup": "popup.html", "default_title": "Analyze with ThreatGraph"},
+  "background": {"service_worker": "worker.js"}
+}

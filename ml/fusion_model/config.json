@@ -1,0 +1,1 @@
+{"architecture":"masked logistic regression","calibration":"sigmoid grouped CV","seed":42,"missing_score":0.5,"explicit_availability_mask":true,"conflicts":true,"uncertainty":true}
