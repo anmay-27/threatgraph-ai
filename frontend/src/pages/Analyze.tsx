@@ -32,7 +32,9 @@ export default function Analyze() {
   }, [file]);
   const navigate = useNavigate();
   const capabilities = useQuery({ queryKey: ['models'], queryFn: () => api<{name:string; available:boolean; deployment_status?:string}[]>('/models') });
-  const health = useQuery({ queryKey: ['scan-health'], queryFn: () => api<{malware_scanner?:{available:boolean}}>('/health'), refetchInterval:30000 });
+  const health = useQuery({ queryKey: ['scan-health'], queryFn: () => api<{max_upload_mb?:number; malware_scanner?:{available:boolean}}>('/health'), refetchInterval:30000 });
+  const maxUpload = health.data?.max_upload_mb ?? 25;
+  const oversized = !!file && file.size > maxUpload * 1024 * 1024;
   const modality = file?.type.split('/')[0];
   const detector = capabilities.data?.find(model => model.name === modality);
   const mutation = useMutation({
@@ -44,6 +46,7 @@ export default function Analyze() {
           body: JSON.stringify({ url }),
         });
       if (!file) throw new Error("Select a file first.");
+      if (oversized) throw new Error(`Choose a file smaller than ${maxUpload} MB.`);
       const body = new FormData();
       body.append("file", file);
       return api<{ id: string }>("/analyze/file", { method: "POST", body });
@@ -73,6 +76,7 @@ export default function Analyze() {
         </p>
       </div>
       <div className="landing-actions">
+        <Link to="/demo">First time? Try the guided demo <ArrowUpRight size={15}/></Link>
         <Link to="/messages">Analyze a suspicious message <ArrowUpRight size={15}/></Link>
         <Link to="/messages?kind=email">Investigate an email <ArrowUpRight size={15}/></Link>
       </div>
@@ -160,13 +164,13 @@ export default function Analyze() {
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                   />
                   <small>
-                    Images, audio, video, PDF, and other files · up to 25 MB by
-                    default
+                    Images, audio, video, PDF, and other files · up to {maxUpload} MB
                   </small>
                 </div>
               </div>
             )}
             {mutation.isError && <ErrorBox error={mutation.error} />}
+            {tab === 'file' && oversized && <div role="alert" className="notice error">This file exceeds the {maxUpload} MB limit. Choose a smaller file.</div>}
             {file && ['image','video','audio'].includes(modality || '') && capabilities.data && <p className="hint" role="status">{detector?.available ? `${modality === 'video' ? 'Experimental video' : modality === 'audio' ? 'Experimental audio' : 'Research image'} detector available. Review the model result and its limits in the report.` : `${modality === 'audio' ? 'Audio' : modality === 'video' ? 'Video' : 'Image'} authenticity detector unavailable. This investigation can still inspect file metadata and available security checks.`}</p>}
             {health.data && <p className="hint" role="status">Malware signatures: {health.data.malware_scanner?.available ? 'scanner ready' : 'scanner unavailable; a malware verdict will be missing'}.</p>}
             <div className="submit-bottom">
@@ -176,14 +180,14 @@ export default function Analyze() {
               </span>
               <button
                 className="primary"
-                disabled={mutation.isPending || (tab === "file" && !file)}
+                disabled={mutation.isPending || (tab === "file" && (!file || oversized)) || (tab === "url" && !url.trim())}
               >
                 {mutation.isPending ? (
                   <Loader2 className="spin" size={17} />
                 ) : (
                   <ScanLine size={17} />
                 )}
-                Analyze Threat
+                Start investigation
                 <ArrowRight size={16} />
               </button>
             </div>

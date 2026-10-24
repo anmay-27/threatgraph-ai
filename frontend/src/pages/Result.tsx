@@ -92,6 +92,7 @@ export default function Result() {
               className="button"
               href={"/api/v1/analyses/" + id + "/report.pdf"}
             >
+              <Download size={15} />
               Export PDF
             </a>
           )}

@@ -17,10 +17,13 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Link, NavLink, Route, Routes } from "react-router-dom";
 import { api } from "./api";
 import "@fontsource-variable/manrope";
+import "@fontsource-variable/inter";
 import "./styles.css";
 import "./studio.css";
 import "./theme.css";
 import "./cases.css";
+import "./product.css";
+import Demo from "./pages/Demo";
 
 import { client, Empty } from "./components/shared";
 import Analyze from "./pages/Analyze";
@@ -82,6 +85,7 @@ function Shell() {
             [Network, "Intelligence graph", "/intelligence"],
             [Boxes, "Model registry", "/research/models"],
             [BookOpen, "Methodology", "/about/methodology"],
+            [ShieldCheck, "Demo guide", "/demo"],
             [ShieldCheck, "Operations", "/admin"],
           ]
             .filter(([, , path]) =>
@@ -145,6 +149,7 @@ function Shell() {
             <Route path="/" element={<Analyze />} />
             <Route path="/analyze" element={<Analyze />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/demo" element={<Demo />} />
             <Route path="/history" element={<HistoryPage />} />
             <Route path="/cases" element={<Cases />} />
             <Route path="/cases/:id" element={<CasePage />} />

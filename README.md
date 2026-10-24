@@ -2,6 +2,8 @@
 
 **Digital Trust & Fraud Investigation Platform**
 
+**Presenting the project?** Start the local app and open `/demo` for live readiness checks, a fictional message sample, and a guided walkthrough. See the [three-minute submission guide](docs/SUBMISSION_GUIDE.md). This repository contains source; local models and private investigation data are not included.
+
 **Latest local MVP work:** working ClamAV scanning, restricted browser inspection, accessible form-question detection, shared actionable UI/PDF summaries, and a 3,292-image training/evaluation experiment. See [local run commands, validation, and remaining limits](docs/MVP_LOCAL_VALIDATION.md).
 
 Investigate digital content before you trust it. ThreatGraph groups suspicious links, messages, emails and uploads into cases; follows QR destinations; correlates repeated entities; and explains evidence-based fraud patterns. Risk, confidence and uncertainty remain separate.
@@ -12,7 +14,7 @@ The installed image model uses official pretrained Community Forensics weights a
 
 The current investigation upgrade adds [case, correlation, fraud and privacy features](docs/PRODUCT_UPGRADE_STATUS.md). Start with a URL, file, pasted message or `.eml` email; group related results under **Cases**; inspect shared entities under **Intelligence graph**; export JSON or PDF. Docker enables accounts by default. Register, then promote the first case investigator with `docker compose exec backend python scripts/manage_account.py your@email.example --role ANALYST`. The [deployment guide](docs/DEPLOYMENT.md) covers local mode, account mode and current verification limits.
 
-![Investigation workspace](docs/screenshots/studio-dark.png)
+![Investigation workspace](docs/screenshots/submission-workspace.png)
 
 ## Start
 
