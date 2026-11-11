@@ -21,7 +21,7 @@ def test_accounts_isolate_all_report_surfaces(monkeypatch):
             )
             with Session() as db:
                 account = db.scalar(select(Account).where(Account.email == email))
-                account.role = "ANALYST"
+                assert account.role == "USER"
                 db.commit()
                 users.append(account.id)
         with Session() as db:

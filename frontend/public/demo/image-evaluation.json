@@ -1,0 +1,46 @@
+{
+  "overall": {
+    "count": 180,
+    "genuine": 90,
+    "synthetic": 90,
+    "false_ai_accusations": 1,
+    "missed_ai": 6,
+    "ai_not_detected": 18,
+    "inconclusive": 32,
+    "correct_conclusive": 141
+  },
+  "groups": {
+    "poster": {
+      "count": 60,
+      "genuine": 30,
+      "synthetic": 30,
+      "false_ai_accusations": 0,
+      "missed_ai": 0,
+      "ai_not_detected": 0,
+      "inconclusive": 12,
+      "correct_conclusive": 48
+    },
+    "modern": {
+      "count": 60,
+      "genuine": 30,
+      "synthetic": 30,
+      "false_ai_accusations": 1,
+      "missed_ai": 0,
+      "ai_not_detected": 8,
+      "inconclusive": 13,
+      "correct_conclusive": 46
+    },
+    "diverse": {
+      "count": 60,
+      "genuine": 30,
+      "synthetic": 30,
+      "false_ai_accusations": 0,
+      "missed_ai": 6,
+      "ai_not_detected": 10,
+      "inconclusive": 7,
+      "correct_conclusive": 47
+    }
+  },
+  "limitation": "Additional samples from existing local research test partitions, excluding previous OpenFake benchmark hashes. Not independent field validation; upstream training overlap unknown. Edited-image and generator-specific coverage requires further labeled data. No thresholds changed.",
+  "threshold": 0.95
+}

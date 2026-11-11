@@ -1350,3 +1350,5 @@ pre {
 .authenticity-score { display: grid; gap: 10px; margin: 22px 0; }
 .authenticity-score progress { width: 100%; height: 14px; accent-color: #247878; }
 .authenticity-score small { color: #425b69; }
+
+.decision-brief,.readiness-panel{padding:clamp(20px,3vw,36px);margin-bottom:24px}.decision-brief{border-top:3px solid #91aaff}.decision-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}.decision-grid p,.decision-grid li{overflow-wrap:anywhere;line-height:1.65}.readiness-panel summary{cursor:pointer;font-weight:600}.decision-grid article{padding:12px;border-bottom:1px solid #64748b55}@media(max-width:760px){.decision-grid{grid-template-columns:1fr}}

@@ -48,6 +48,9 @@ def extract_text(text):
         payee = parse_qs(urlsplit(uri).query).get("pa", [""])[0]
         if re.fullmatch(r"[\w.+-]+@[\w.-]+", payee):
             result.add(("UPI_ID", payee.lower()))
+    # Only explicitly labelled bare payment handles; do not reinterpret emails.
+    for payee in re.findall(r'\b(?:upi(?:\s+id)?|payee)\s*[:=]\s*([\w.+-]+@[\w.-]+)', text[:100000], re.I):
+        result.add(('UPI_ID', payee.lower().rstrip('.,;')))
     return sorted(result)
 
 
@@ -64,6 +67,8 @@ def extract_report(row):
         "brand": "BRAND",
         "qr_code": "QR_DESTINATION",
         "email": "EMAIL",
+        "upi_id": "UPI_ID",
+        "phone_number": "PHONE_NUMBER",
     }
     for n in report.get("graph", {}).get("nodes", []):
         value = n.get("label", "")

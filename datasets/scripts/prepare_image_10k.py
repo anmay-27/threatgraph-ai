@@ -1,5 +1,6 @@
 """Build immutable 10k training split from pinned shards, excluding prior experiments."""
 import csv
+import argparse
 import hashlib
 import io
 import json
@@ -16,6 +17,11 @@ RAW=Path('datasets/raw/genimage-10k')
 GENERATORS=['Real','ADM','BigGAN','GLIDE','Midjourney','SD14','SD15','VQDM','Wukong']
 
 def main():
+    global ROOT
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--diversity-round',action='store_true')
+    args=parser.parse_args()
+    if args.diversity_round:ROOT=Path('datasets/prepared/image-diversity')
     if (ROOT/'manifest.csv').exists():raise RuntimeError('Immutable dataset already prepared')
     ROOT.mkdir(parents=True,exist_ok=True);(ROOT/'images').mkdir(exist_ok=True)
     pixels=set();groups=set();hashes=set()
@@ -69,7 +75,7 @@ def main():
     for row in candidates:pools[(row['source_split'],row['label'],row['generator'])].append(row)
     for pool in pools.values():rng.shuffle(pool)
     def take(source,label,count,heldout=False):
-        gens=['Real'] if label==0 else ['Midjourney'] if heldout else [g for g in GENERATORS[1:] if g!='Midjourney']
+        gens=['Real'] if label==0 else ['Midjourney'] if heldout else [g for g in GENERATORS[1:] if args.diversity_round or g!='Midjourney']
         result=[]
         while len(result)<count:
             active=[g for g in gens if pools[(source,label,g)]]
@@ -79,7 +85,8 @@ def main():
                 if len(result)==count:break
         return result
     result=[]
-    for split,source,count in [('train','train',5000),('validation','train',500),('calibration','train',500),('test','validation',500),('ood','validation',100)]:
+    partitions=[('train','train',1000),('validation','train',200),('calibration','train',200),('test','validation',250)] if args.diversity_round else [('train','train',5000),('validation','train',500),('calibration','train',500),('test','validation',500),('ood','validation',100)]
+    for split,source,count in partitions:
         for label in [0,1]:
             for row in take(source,label,count,split=='ood'):result.append(dict(row,split=split))
     with (ROOT/'manifest.csv').open('w',newline='') as f:

@@ -99,6 +99,10 @@ def predict_media(path: Path, modality: str, asset: str):
             from ml.common.hf_image import infer
 
             result = infer(path, checkpoint)
+        elif modality == "image" and record.get("runtime") == "openfake_onnx":
+            from ml.common.openfake_image import infer
+
+            result = infer(path, checkpoint)
         elif modality == "image" and record.get("runtime") == "community_forensics":
             from ml.common.community_image import infer
 

@@ -28,6 +28,7 @@ from app.services.auth import (
     accessible,
     scope,
 )
+from app.services import google_auth  # Register OAuth routes and persistent identity tables.
 from app.services.privacy import router as privacy_router
 from app.services.operations import router as operations_router
 from app.services.feedback import router as feedback_router
@@ -71,6 +72,8 @@ app.include_router(privacy_router)
 app.include_router(operations_router)
 app.include_router(feedback_router)
 app.include_router(jobs_router)
+from app.services.readiness import router as readiness_router
+app.include_router(readiness_router)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins.split(","),
@@ -93,17 +96,13 @@ async def guard(request: Request, call_next):
                 except HTTPException as exc:return JSONResponse({'detail':exc.detail},exc.status_code)
         if (
             request.url.path
-            not in ("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/health")
+            not in ("/api/v1/auth/login", "/api/v1/auth/register", "/api/v1/health", "/api/v1/auth/providers",
+                    "/api/v1/auth/google/start", "/api/v1/auth/google/callback")
             and request.method != "OPTIONS"
         ):
             try:
                 user = authenticate(request)
                 token = principal.set(user)
-                if request.url.path.startswith(
-                    ("/api/v1/cases", "/api/v1/entities", "/api/v1/intelligence")
-                ) and user["role"] not in ("ANALYST", "ADMIN"):
-                    principal.reset(token)
-                    return JSONResponse({"detail": "Analyst role required"}, 403)
             except HTTPException as exc:
                 return JSONResponse({"detail": exc.detail}, exc.status_code)
     if request.method == "POST":

@@ -47,7 +47,7 @@ export default function ImageAssessment({ row }: { row: Analysis }) {
     },
   });
   return <section className="card authenticity-card" aria-labelledby="authenticity-title">
-    <div className="assessment-kicker"><span className="eyebrow"><ScanEye size={16} /> IMAGE ORIGIN</span><span className="research-pill">{result.calibrated ? "Calibrated research model" : "Experimental model"}</span></div>
+    <div className="assessment-kicker"><span className="eyebrow"><ScanEye size={16} /> IMAGE ORIGIN</span><span className="research-pill">{String(result.model?.metadata.deployment_status ?? "").startsWith("experimental") ? "Experimental local model" : result.calibrated ? "Calibrated research model" : "Experimental model"}</span></div>
     <div className="assessment-hero"><div className="assessment-copy">
     <h2 id="authenticity-title">{knownAiFeedback ? "Reviewer reports AI-made; detector disagreed" : result.title}</h2>
     <p>{knownAiFeedback ? "A reviewer supplied an AI-origin statement for this image. ThreatGraph has not independently verified that statement. The original detector output remains below as a documented possible false negative." : result.explanation}</p>
@@ -56,8 +56,8 @@ export default function ImageAssessment({ row }: { row: Analysis }) {
       <span>AI-pattern model score: <b>{result.score > 0.999 ? ">99.9" : result.score < 0.001 ? "<0.1" : (result.score * 100).toFixed(1)}%</b></span>
       <progress aria-label="AI model score" max={1} value={result.score} />
       <div className="score-endpoints"><span>Real-image patterns</span><span>AI-image patterns</span></div>
-      <small>{result.calibrated ? "Calibrated on a limited research partition. This is not the chance that your image is AI-made; false negatives remain possible." : "Raw model output, not a calibrated probability or certainty of AI generation."}</small>
-      {result.calibrated && typeof result.model?.metadata.threshold === "number" && <small>AI class cutoff: {(result.model.metadata.threshold * 100).toFixed(1)}%, selected on calibration data. The class suggestion uses this cutoff; uncertainty can still require an inconclusive result.</small>}
+      <small>{result.publisherCalibrated ? "Publisher-scaled screening score, not a verified probability of AI origin." : result.calibrated ? "Calibrated on a limited research partition. This is not the chance that your image is AI-made; false negatives remain possible." : "Raw model output, not a calibrated probability or certainty of AI generation."}</small>
+      {result.calibrated && typeof result.model?.metadata.threshold === "number" && <small>AI class cutoff: {(result.model.metadata.threshold * 100).toFixed(1)}% ({result.publisherCalibrated ? "publisher cutoff; not tuned on your upload" : "selected on local calibration data"}). The class suggestion uses this cutoff; uncertainty can still require an inconclusive result.</small>}
     </div>}
     </div><figure className="assessment-preview">{previewFailed ? <div><Fingerprint size={40} /><p>Original preview expired</p></div> : <img src={`/api/v1/analyses/${row.id}/media`} alt="Submitted image being assessed" onError={() => setPreviewFailed(true)} />}<figcaption>Submitted original · analyzed locally</figcaption></figure></div>
     <div className="assessment-facts"><div><span>Model confidence</span><strong>{result.model ? `${Math.round(result.model.confidence * 100)}%` : "Unavailable"}</strong><small>Heuristic confidence, not accuracy</small></div><div><span>Uncertainty</span><strong>{uncertainty === undefined ? "Unknown" : uncertainty >= .65 ? "High" : uncertainty >= .3 ? "Medium" : "Low"}</strong><small>{result.model?.metadata.ood === "possibly_out_of_distribution" ? "Unfamiliar image patterns" : "Prediction ambiguity"}</small></div><div><span>Image detector</span><strong className="model-name">{result.model?.metadata.architecture || "Visual classifier"}</strong><small>{result.model?.model_version || "No prediction available"}</small></div></div>
@@ -73,7 +73,7 @@ export default function ImageAssessment({ row }: { row: Analysis }) {
     <details className="diagnostic-details" open><summary>Observed evidence</summary>
     <ul>{result.observations.map((observation) => <li key={observation}>{observation}</li>)}</ul>
     </details>
-    {result.diagnostics.length > 0 && <details className="diagnostic-details"><summary>Explore prediction stability</summary><p>Same model, three views. These are sensitivity checks, not three independent votes.</p>{result.diagnostics.map((check) => <div className="diagnostic-row" key={check.name}><span>{check.name}</span><progress max={1} value={check.score} aria-label={`${check.name} AI score`} /><strong>{(check.score * 100).toFixed(1)}%</strong></div>)}</details>}
+    {result.diagnostics.length > 0 && <details className="diagnostic-details"><summary>Explore prediction stability</summary><p>Same model, multiple views. These are sensitivity checks, not three independent votes.</p>{result.diagnostics.map((check) => <div className="diagnostic-row" key={check.name}><span>{check.name}</span><progress max={1} value={check.score} aria-label={`${check.name} AI score`} /><strong>{(check.score * 100).toFixed(1)}%</strong></div>)}</details>}
     <details className="diagnostic-details"><summary>Model and provenance context</summary>
     <ul>{result.reasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
     {result.model?.metadata.test_metrics && <p>Held-out subset: {result.model.metadata.test_metrics.count} images · balanced accuracy {(result.model.metadata.test_metrics.balanced_accuracy * 100).toFixed(1)}% · F1 {result.model.metadata.test_metrics.f1.toFixed(3)}. These are dataset measurements, not a guarantee for this upload.</p>}

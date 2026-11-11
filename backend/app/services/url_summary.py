@@ -2,13 +2,18 @@
 from urllib.parse import urlsplit
 
 
+def canonical_url(value):
+    parsed = urlsplit(value)
+    return (parsed.scheme.lower(), parsed.netloc.lower(), parsed.path or '/', parsed.query)
+
+
 def summarize_url(name, report):
     evidence=report.get('evidence',[])
     assets=report.get('assets',[])
     graph=report.get('graph',{})
-    root=next((a for a in assets if a.get('type')=='url' and a.get('url')==name),None)
+    root=next((a for a in assets if a.get('type')=='url' and canonical_url(a.get('url') or '')==canonical_url(name)),None)
     if not root:
-        root=next((n for n in graph.get('nodes',[]) if n.get('type')=='url' and n.get('label')==name),None)
+        root=next((n for n in graph.get('nodes',[]) if n.get('type')=='url' and canonical_url(n.get('label') or '')==canonical_url(name)),None)
     root_id=root.get('id') if root else None
     chain=next((e.get('metadata',{}).get('chain',[]) for e in evidence if e.get('asset_id')==root_id and e.get('label')=='redirect_chain'),[])
     final=chain[-1][1] if chain else name
@@ -35,6 +40,9 @@ def summarize_url(name, report):
         if browser:observations.append('Also inspected the rendered page and initial requests in a restricted, unauthenticated browser session.')
         observations.append(f'{len(forms)} declared form destination(s); visible questions concern: '+(', '.join(fields) if fields else 'field types not established from observed markup')+'.')
         if any(field.get('disabled') for form in forms for field in form.get('fields',[])):observations.append('Some question controls were disabled in the observed page. Their labels are recorded, but submission behavior was not established.')
+        destinations=sorted({urlsplit(form.get('destination') or '').hostname for form in forms if urlsplit(form.get('destination') or '').hostname})
+        if destinations: observations.append('Declared form recipient hosts: '+', '.join(destinations)+'. These are declared destinations; no data was submitted.')
+        if any(host != urlsplit(final).hostname for host in destinations): observations.append('A form declares a different recipient host. This may be legitimate; verify the recipient and purpose before sharing data.')
     if chain:observations.append(f'Followed {len(chain)} redirect(s) for the submitted URL; final host: {urlsplit(final).hostname}.')
     else:observations.append('No redirect recorded for the submitted URL.' if page else 'No completed page or redirect inspection.')
     actions=[]
@@ -43,7 +51,8 @@ def summarize_url(name, report):
     if any(c.get('id')=='malware' and c.get('status') in {'unavailable','partial','not_checked'} for c in checks):actions.append('The malware check is incomplete; avoid opening downloaded files until a working scanner checks them.')
     if not page:actions.append('Retry when page access is available, or provide the public viewing URL if this link requires sign-in.')
     if not actions:actions.append('Verify the source independently before relying on this page for consequential actions.')
-    return {'schema':1,'title':'Security indicators need review' if flags else 'Page inspected; no high-risk indicator identified' if page else 'Page inspection unavailable',
+    if missing: actions.append('Review incomplete checks below; retry unavailable services before treating this investigation as complete.')
+    return {'schema':2,'title':'Security indicators need review' if flags else 'Page inspected with coverage gaps; no high-risk indicator observed' if page and missing else 'Page inspected; no high-risk indicator identified' if page else 'Page inspection unavailable',
             'meaning':'These are observed screening results, not verification of the operator or a safety certificate. '+('Browser observation covers initial loading only; later interactions and authenticated content were not tested.' if browser else 'Scripts, later interactions and authenticated content were not observed.'),
             'page_title':(page or {}).get('metadata',{}).get('title',''),'final_host':urlsplit(final).hostname,
             'observations':observations,'requested_data':fields,'findings':[{'id':e['id'],'label':e['label'],'explanation':e['explanation']} for e in flags],

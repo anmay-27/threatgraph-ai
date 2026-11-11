@@ -85,6 +85,7 @@ export default function HistoryPage() {
           onChange={(e) => setAfter(e.target.value)}
         />
       </div>
+      <div className="history-tools"><span aria-live="polite">{rows.isFetching ? "Updating results?" : `${rows.data?.length ?? 0} investigations shown`}</span>{(q||type||risk||after||verdict)&&<button onClick={()=>{setQ("");setType("");setRisk("");setAfter("");setVerdict("");}}>Clear all filters</button>}</div>
       {rows.isError ? (
         <ErrorBox error={rows.error} />
       ) : rows.isPending ? (

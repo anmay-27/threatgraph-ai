@@ -1,131 +1,17 @@
-import { useQuery } from "@tanstack/react-query";
-import { useState, type ReactNode } from "react";
-import { api } from "../api";
-import { ErrorBox, Loading, client } from "./shared";
-export default function AccountGate({ children }: { children: ReactNode }) {
-  const me = useQuery({
-    queryKey: ["account"],
-    queryFn: () =>
-      api<{ auth_required: boolean; email?: string; role: string }>("/auth/me"),
-    retry: false,
-  });
-  const [email, setEmail] = useState(""),
-    [password, setPassword] = useState(""),
-    [register, setRegister] = useState(false),
-    [error, setError] = useState<Error | null>(null),
-    [busy, setBusy] = useState(false);
-  const [extensionToken, setExtensionToken] = useState("");
-  const [extensionError, setExtensionError] = useState("");
-  if (me.isPending) return <Loading />;
-  if (me.data)
-    return (
-      <>
-        {me.data.auth_required && (
-          <div className="case-actions account-bar">
-            <span>
-              {me.data.email} · {me.data.role}
-            </span>
-            <button
-              onClick={async () => {
-                setExtensionError("");
-                try {
-                  const result = await api<{ token: string }>("/auth/token", {
-                    method: "POST",
-                  });
-                  setExtensionToken(result.token);
-                } catch (e) {
-                  setExtensionError((e as Error).message);
-                }
-              }}
-            >
-              Create extension token
-            </button>
-            {extensionError && <span role="alert">{extensionError}</span>}
-            {extensionToken && (
-              <label>
-                Private token (expires in 12 hours)
-                <input
-                  readOnly
-                  type="password"
-                  value={extensionToken}
-                  onFocus={(e) => e.currentTarget.select()}
-                />
-                <button onClick={() => setExtensionToken("")}>
-                  Hide token
-                </button>
-              </label>
-            )}
-            <button
-              onClick={async () => {
-                await api("/auth/logout", { method: "POST" });
-                client.clear();
-                window.location.assign("/");
-              }}
-            >
-              Sign out & revoke tokens
-            </button>
-          </div>
-        )}
-        {children}
-      </>
-    );
-  return (
-    <main className="account-login">
-      <h1>ThreatGraph AI</h1>
-      <p>Sign in to your investigation workspace.</p>
-      <form
-        className="card case-form"
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setBusy(true);
-          setError(null);
-          try {
-            const options = {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ email, password }),
-            };
-            if (register) await api("/auth/register", options);
-            await api("/auth/login", options);
-            setPassword("");
-            await client.invalidateQueries({ queryKey: ["account"] });
-          } catch (e) {
-            setError(e as Error);
-          } finally {
-            setBusy(false);
-          }
-        }}
-      >
-        <label>
-          Email
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="username"
-          />
-        </label>
-        <label>
-          Password (at least 12 characters)
-          <input
-            type="password"
-            minLength={12}
-            maxLength={256}
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete={register ? "new-password" : "current-password"}
-          />
-        </label>
-        <button disabled={busy}>
-          {register ? "Create account" : "Sign in"}
-        </button>
-        <button type="button" onClick={() => setRegister(!register)}>
-          {register ? "Use existing account" : "Create an account"}
-        </button>
-        {error && <ErrorBox error={error} />}
-      </form>
-    </main>
-  );
+﻿import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Eye, EyeOff, LockKeyhole, Network, ArrowRight } from 'lucide-react';
+import { api, ApiError } from '../api';
+import { ErrorBox, Loading, client } from './shared';
+export default function AccountGate({children}:{children:ReactNode}){
+ const providers=useQuery({queryKey:['auth-providers'],queryFn:()=>api<{google:boolean}>('/auth/providers'),retry:false});
+ const googleErrors:Record<string,string>={expired:'Google sign-in expired. Please try again.',cancelled:'Google sign-in was cancelled. You can try again or use your password.',unverified:'Google could not verify your email address.',existing_account:'An account already uses this email. Please log in with your existing password; Google accounts are not automatically linked.',unavailable:'Google sign-in is temporarily unavailable. Please try again or use your password.'};
+ const googleError=new URLSearchParams(window.location.search).get('auth_error');
+ const me=useQuery({queryKey:['account'],queryFn:()=>api<{auth_required:boolean;email?:string;role:string}>('/auth/me'),retry:false});
+ const [email,setEmail]=useState(''),[password,setPassword]=useState(''),[confirm,setConfirm]=useState(''),[register,setRegister]=useState(false),[visible,setVisible]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState<Error|null>(null);
+ useEffect(()=>{const expire=()=>{client.clear();window.location.reload();};window.addEventListener('session-expired',expire);return()=>window.removeEventListener('session-expired',expire);},[]);
+ if(me.isPending)return <Loading/>;
+ if(me.data)return <>{children}</>;
+ if(!(me.error instanceof ApiError)||me.error.status!==401)return <main className="auth-unavailable"><h1>Workspace temporarily unavailable</h1><p>We could not connect to the account service. Your saved investigations have not been changed.</p><button onClick={()=>me.refetch()}>Try again</button></main>;
+ return <main className="auth-screen"><section className="auth-story"><div className="auth-brand"><Network size={26}/> ThreatGraph AI</div><h1>Your evidence.<br/><em>Your workspace.</em></h1><p>Investigate suspicious content, connect the clues, and keep your cases in one private account.</p><img src="/art/investigation-hero.png" alt=""/><span><LockKeyhole size={16}/> Passwords are stored as salted hashes.</span></section><section className="auth-form-panel"><span className="eyebrow">DIGITAL FRAUD INVESTIGATION</span><h2>{register?'Create your workspace':'Welcome back'}</h2><p>{register?'Sign up to start your first investigation.':'Log in to continue your investigations.'}</p>{googleError&&<div role="alert" className="google-auth-error">{googleErrors[googleError]||'Google sign-in failed. Please try again.'}</div>}<button className="google-sign-in" type="button" disabled={!providers.data?.google||busy} onClick={()=>window.location.assign('/api/v1/auth/google/start')}>Continue with Google</button>{!providers.data?.google&&<small>Google sign-in is awaiting configuration. Email login is available below.</small>}<div className="auth-divider">or use your email</div><form onSubmit={async e=>{e.preventDefault();setError(null);if(register&&password!==confirm){setError(new Error('Passwords do not match.'));return;}setBusy(true);try{const options={method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})};if(register){await api('/auth/register',options);setRegister(false);}await api('/auth/login',options);setPassword('');setConfirm('');client.clear();window.location.assign('/');}catch(e){setError(e as Error);}finally{setBusy(false);}}}><label>Email address<input type="email" autoComplete="username" required maxLength={254} value={email} onChange={e=>setEmail(e.target.value)} disabled={busy}/></label><label>Password<div className="password-field"><input type={visible?'text':'password'} autoComplete={register?'new-password':'current-password'} minLength={12} maxLength={256} required value={password} onChange={e=>setPassword(e.target.value)} disabled={busy}/><button type="button" aria-label={visible?'Hide password':'Show password'} onClick={()=>setVisible(!visible)}>{visible?<EyeOff size={18}/>:<Eye size={18}/>}</button></div></label><small>At least 12 characters. A memorable passphrase works well.</small>{register&&<label>Confirm password<input type={visible?'text':'password'} autoComplete="new-password" required value={confirm} onChange={e=>setConfirm(e.target.value)} disabled={busy}/></label>}{error&&<ErrorBox error={error}/>}<button className="primary auth-submit" disabled={busy}>{busy?'Please wait...':register?'Create account':'Log in'}<ArrowRight size={17}/></button><button className="auth-switch" type="button" disabled={busy} onClick={()=>{setRegister(!register);setError(null);setPassword('');setConfirm('');}}>{register?'Already have an account? Log in':'New here? Create an account'}</button></form><p className="auth-footnote">Your email and password hash are saved in the account database. A random session token is kept in an HTTP-only cookie. Email verification and password recovery are not available yet.</p></section></main>;
 }

@@ -1,0 +1,57 @@
+"""Exercise the redesigned frontend against the running local application."""
+from pathlib import Path
+import json
+from playwright.sync_api import sync_playwright
+out=Path('research/results/frontend-experience');out.mkdir(parents=True,exist_ok=True)
+errors=[]
+with sync_playwright() as p:
+    browser=p.chromium.launch(channel='msedge',headless=True)
+    page=browser.new_page(viewport={'width':1366,'height':900})
+    page.on('pageerror',lambda e:errors.append(str(e)))
+    page.goto('http://127.0.0.1:3000/analyze')
+    page.get_by_role('navigation',name='Main navigation').get_by_role('button',name='More pages').click()
+    page.get_by_role('dialog',name='More navigation').get_by_role('link',name='Overview').wait_for()
+    page.get_by_role('button',name='Close navigation').click()
+    page.locator('.visual-hero img').wait_for()
+    shortcut=page.get_by_role('button',name='Can I trust this link?',exact=False)
+    shortcut.click()
+    assert shortcut.get_attribute('aria-pressed')=='true'
+    page.wait_for_function("document.activeElement===document.getElementById('url')")
+    page.wait_for_function("document.querySelector('.visual-hero img').naturalWidth > 0")
+    page.get_by_role('link',name='Start investigating',exact=False).click()
+    assert page.url.endswith('#investigation-input')
+    page.get_by_role('tab',name='Connect the evidence',exact=False).click()
+    assert page.get_by_role('link',name='Explore your cases').get_attribute('href')=='/cases'
+    page.evaluate('window.scrollTo(0,0)')
+    page.screenshot(path=str(out/'laptop-viewport.png'))
+    page.screenshot(path=str(out/'analyze-light.png'),full_page=True)
+    page.evaluate("document.documentElement.dataset.theme='dark'")
+    page.screenshot(path=str(out/'analyze-dark.png'),full_page=True)
+    page.goto('http://127.0.0.1:3000/history')
+    page.get_by_label('Search history').fill('fictional')
+    page.get_by_role('button',name='Clear all filters').click()
+    assert page.get_by_label('Search history').input_value()==''
+    ids=json.loads(Path('research/results/fraud-mvp-live/verification.json').read_text())
+    page.goto('http://127.0.0.1:3000/analysis/'+ids['analysis_id'])
+    nav=page.get_by_role('navigation',name='Report sections');nav.wait_for()
+    nav.get_by_role('link',name='Graph',exact=True).click()
+    assert page.url.endswith('#report-graph')
+    page.screenshot(path=str(out/'report-dark.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
+    page.goto('http://127.0.0.1:3000/analyze')
+    bottom=page.get_by_role('navigation',name='Mobile navigation')
+    bottom.get_by_role('button',name='More navigation').click()
+    page.get_by_role('dialog',name='More navigation').get_by_role('link',name='Model registry').wait_for()
+    page.keyboard.press('Escape')
+    assert not page.get_by_role('dialog',name='More navigation').is_visible()
+    bottom.get_by_role('button',name='More navigation').click()
+    page.get_by_role('dialog',name='More navigation').get_by_role('link',name='Demo guide').click()
+    assert page.url.endswith('/demo')
+    assert not page.get_by_role('dialog',name='More navigation').is_visible()
+    bottom.get_by_role('link',name='Investigate').click()
+    page.wait_for_function('document.documentElement.scrollWidth <= innerWidth+1')
+    page.screenshot(path=str(out/'analyze-mobile.png'),full_page=True)
+    assert not errors,errors
+    browser.close()
+(out/'verification.json').write_text(json.dumps({'guide':True,'filters':True,'report_navigation':True,'mobile_navigation':True,'mobile_layout':True,'errors':errors},indent=2))
+print('Frontend experience checks passed')

@@ -93,8 +93,9 @@ def infer_scenarios(evidence, graph):
                     "evidence_ids": [e.id for e in items],
                 }
             )
-    from app.services.scenarios import additional_scenarios
+    from app.services.scenarios import additional_scenarios, chain_scenarios
     scenarios.extend(additional_scenarios(evidence))
+    scenarios.extend(chain_scenarios(evidence, graph))
     for scenario in scenarios:
         scenario.setdefault('scenario_name',scenario['label'].lower().replace(' ','_'))
         scenario.setdefault('supporting_evidence',scenario['evidence_ids'])

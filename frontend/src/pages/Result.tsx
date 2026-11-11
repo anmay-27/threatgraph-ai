@@ -1,3 +1,5 @@
+import ReportNavigator from "../components/ReportNavigator";
+import DecisionBrief from "../components/DecisionBrief";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
@@ -128,6 +130,8 @@ export default function Result() {
         </section>
       ) : (
         <>
+          <ReportNavigator/>
+          <div id="report-summary"><DecisionBrief row={row} /></div>
           {row.input_type === "image" && (
             <ImageAssessment key={row.id} row={row} />
           )}
@@ -136,8 +140,8 @@ export default function Result() {
             <VideoAssessment key={row.id} row={row} />
           )}
           <DocumentAssessment row={row} />
-          <SecurityChecks row={row} />
-          <InvestigationContext row={row} />
+          <div id="report-checks"><SecurityChecks row={row} /></div>
+          <div id="report-context"><InvestigationContext row={row} /></div>
           <PrivacyControls id={row.id} />
           {row.state === "PARTIAL" && (
             <div className="notice">
@@ -206,8 +210,8 @@ export default function Result() {
               <p>{r.explanation}</p>
             </div>
           </section>
-          <Graph graph={r.graph} />
-          <div className="result-columns">
+          <div id="report-graph"><Graph graph={r.graph} /></div>
+          <div id="report-evidence" className="result-columns">
             <section className="card">
               <div className="tabs" role="tablist" aria-label="Report section">
                 {["evidence", "models", "provenance", "technical"].map((t) => (

@@ -65,6 +65,18 @@ def infer(path: Path, checkpoint: Path):
     image.save(buffer, format='JPEG', quality=85)
     with Image.open(io.BytesIO(buffer.getvalue())) as jpeg:
         views = [image, ImageOps.mirror(image), jpeg.convert('RGB')]
+    names = ['Original image', 'Horizontal flip', 'JPEG quality 85']
+    # Default preprocessing center-crops tall posters/portraits. Inspect the
+    # complete layout separately without replacing its calibrated primary score.
+    if max(image.size) / min(image.size) > 1.2:
+        canvas = Image.new('RGB', (440, 440), (124, 116, 104))
+        fitted = ImageOps.contain(image, (384, 384))
+        canvas.paste(fitted, ((440-fitted.width)//2, (440-fitted.height)//2))
+        views.append(canvas)
+        names.append('Full image layout (diagnostic, not separately calibrated)')
     with torch.inference_mode():
         scores = [float(torch.sigmoid(model(image_tensor(view).unsqueeze(0)).reshape(-1)[0] / temperature)) for view in views]
-    return assess_scores(scores, threshold) | dict(temperature=temperature, pretrained_source='OwensLab/commfor-model-384', calibration_partition=calibration['partition'], limitations='Third-party pretrained vision model with local temperature calibration. Possible pretraining overlap with benchmark images; independent field reliability is not established. No altered-pixel localization or validated out-of-domain detector.')
+    result = assess_scores(scores, threshold)
+    result['stability_checks'] = [dict(name=name, score=score) for name,score in zip(names,scores)]
+    result['preprocessing'] = 'Resize shortest side to 440 pixels, then center-crop to 384; tall/wide images also receive a full-layout diagnostic.'
+    return result | dict(temperature=temperature, pretrained_source='OwensLab/commfor-model-384', calibration_partition=calibration['partition'], limitations='Third-party pretrained vision model with local temperature calibration. Possible pretraining overlap with benchmark images; independent field reliability is not established. No altered-pixel localization or validated out-of-domain detector.')

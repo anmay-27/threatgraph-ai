@@ -1,3 +1,4 @@
+import Readiness from "../components/Readiness";
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
@@ -12,9 +13,10 @@ export default function Demo() {
   const [copyError, setCopyError] = useState(false);
   const health = useQuery({queryKey:['demo-health'], queryFn:()=>api<{malware_scanner?:{available:boolean}}>('/health'),refetchInterval:15000});
   const models = useQuery({queryKey:['models'],queryFn:()=>api<{name:string;available:boolean}[]>('/models')});
-  return <>
+  return <><Readiness/>
     <PageTitle eyebrow="A GUIDED FIRST INVESTIGATION" title="From suspicious content to clear evidence." text="Four ways to explore ThreatGraph. Every submitted sample runs through the real analysis pipeline." />
-    <section className="demo-status card" aria-label="Live system status">
+    <section className="card case-form"><h2>Primary demo: investigate a suspicious job offer</h2><p>These are fictional input files. Every finding is produced by the real analyzers. The QR points to benign example.com; no malicious page result is simulated.</p><ol><li>Create a previous case and upload <a href="/demo/previous-payment.txt" download>the prior payment note</a>.</li><li>Create a job-offer case and upload <a href="/demo/fictional-offer.eml" download>the email with its PDF attachment</a>.</li><li>Review the email-to-PDF-to-QR path, advance-fee hypothesis, shared payment identifier, and coverage gaps.</li><li>Switch to analyst view, inspect the threat graph, and export the case PDF.</li></ol><Link to="/cases">Open case workspace</Link><p>No funds are sent and no forms are submitted. For an exact payment-webpage chain, the automated workflow test uses an explicitly controlled response fixture.</p></section>
+    <section className="card decision-brief"><h2>Demo acceptance checklist</h2><p>Use these expected observations to review the real run. A missing observation is a failed or incomplete check, not a result to invent.</p><ol><li>Email headers show the fictional sender and reply-to domains.</li><li>The attached PDF yields an advance-fee request and a payment identifier.</li><li>The decoded QR leads to benign example.com; do not describe that destination as malicious.</li><li>The previous case shares the payment identifier. Reuse is a connection, not proof of guilt.</li><li>The case explains the recruitment/payment hypothesis with supporting evidence and what remains unverified.</li><li>The PDF opens with a decision brief; JSON retains detailed evidence.</li></ol><p>If a service fails, review Before you investigate and show the actual coverage gap. For image testing, use known originals and record incorrect or inconclusive predictions.</p></section><section className="demo-status card" aria-label="Live system status">
       <ShieldCheck size={24}/><div><strong>Live system readiness</strong><p>{health.isError ? 'API unavailable. Start the local services before presenting.' : health.isPending ? 'Checking services…' : 'API connected. Ready to submit an investigation.'}</p></div>
       <span className="readiness-pill">Image model: {models.isError ? 'check failed' : !models.data ? 'checking' : models.data.some(m=>m.name==='image' && m.available) ? 'available' : 'unavailable'}</span>
       <span className="readiness-pill">Malware scanner: {health.isError ? 'check failed' : !health.data ? 'checking' : health.data.malware_scanner?.available ? 'ready' : 'unavailable'}</span>

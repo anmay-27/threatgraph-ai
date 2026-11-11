@@ -1,3 +1,4 @@
+import Readiness from "../components/Readiness";
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api } from "../api";
@@ -10,7 +11,7 @@ export default function Message() {
     [error, setError] = useState<Error | null>(null);
   const navigate = useNavigate();
   return (
-    <>
+    <><Readiness/>
       <PageTitle
         eyebrow="DIGITAL TRUST & FRAUD INVESTIGATION"
         title="Investigate a message"

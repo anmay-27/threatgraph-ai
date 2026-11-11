@@ -3,6 +3,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 import cv2
+import numpy as np
 from app.schemas.evidence import finding
 from app.services.registry import predict_media
 from app.analyzers.image.inspect import decode_qr
@@ -14,14 +15,14 @@ def inspect_video(path: Path, asset: str):
     try:
         fps = capture.get(cv2.CAP_PROP_FPS)
         frames = capture.get(cv2.CAP_PROP_FRAME_COUNT)
-        if not capture.isOpened() or fps <= 0 or frames <= 0:
+        if not capture.isOpened() or not np.isfinite(fps) or not np.isfinite(frames) or fps <= 0 or frames <= 0:
             raise ValueError("Video could not be decoded")
         duration = frames / fps
         if duration > 600:
             raise ValueError("Video exceeds 10 minute processing limit")
         urls = []
-        for index in range(0, int(frames), max(1, int(frames / 24))):
-            capture.set(cv2.CAP_PROP_POS_FRAMES, index)
+        for index in np.linspace(0, int(frames) - 1, min(24, int(frames)), dtype=int):
+            capture.set(cv2.CAP_PROP_POS_FRAMES, int(index))
             ok, frame = capture.read()
             if ok:
                 if max(frame.shape[:2]) > 1800:

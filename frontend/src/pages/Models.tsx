@@ -1,3 +1,4 @@
+import ImageBenchmark from "../components/ImageBenchmark";
 import { useQuery } from "@tanstack/react-query";
 import { Boxes } from "lucide-react";
 import { api } from "../api";
@@ -15,6 +16,8 @@ export default function Models() {
         title="Model registry"
         text="Installed checkpoints, data lineage, and actual evaluation results."
       />
+      <section className="card decision-brief"><h2>Image model license: noncommercial use</h2><p>The installed Detectra OpenFake checkpoint is licensed under CC BY-NC 4.0. Educational, noncommercial demos are generally permitted with attribution. Commercial use needs appropriate permission or a different model.</p><p>Credits: s-gehring; Detectra by TensorFold; Community Forensics by Jeongsoo Park and Andrew Owens; OpenFake authors. Improved using Qwen, as disclosed upstream. The checkpoint is unchanged; ThreatGraph adds local integration and evaluation.</p><p><a href="https://huggingface.co/s-gehring/detectra-openfake" target="_blank" rel="noreferrer">Publisher, full attribution and upstream terms</a> ? <a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noreferrer">License</a></p></section>
+      <ImageBenchmark/>
       {query.isError ? (
         <ErrorBox error={query.error} />
       ) : query.isPending ? (

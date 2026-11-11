@@ -8,6 +8,7 @@ from app.schemas.evidence import finding
 from app.services.registry import predict_media
 from app.analyzers.provenance.inspect import inspect_provenance
 from app.analyzers.image.generation import generation_markers
+from app.analyzers.image.visible_marks import corner_sparkles
 
 Image.MAX_IMAGE_PIXELS = 25_000_000
 
@@ -61,6 +62,9 @@ def inspect_image(path: Path, asset: str):
     ]
     if markers:
         evidence.append(finding(asset, "image_forensics", "metadata", "generation_metadata", "Embedded metadata describes an AI-generation workflow. Metadata is editable and may refer to only part of an image; it is not verified provenance.", metadata={"markers": markers, "verified": False}))
+    marks = corner_sparkles(image)
+    if marks:
+        evidence.append(finding(asset, "visible_mark_screen", "metadata", "possible_visible_generation_mark", "A small four-point sparkle-like symbol was found near a bottom corner. It may be a generation mark or an ordinary decorative logo. This shape screen does not identify Gemini, verify SynthID, or establish AI origin; inspect the marked region and source history.", metadata={"boxes_normalized_xywh": marks, "verified": False, "provider": "unknown", "method": "experimental_corner_shape_screen", "risk_eligible": False}))
     evidence.extend(inspect_provenance(path, asset))
     evidence.append(predict_media(path, "image", asset))
     thumb = image.copy()

@@ -3,6 +3,7 @@
 import hashlib
 import hmac
 import secrets
+import re
 from contextvars import ContextVar
 from types import MappingProxyType
 from datetime import datetime, timedelta, timezone
@@ -149,7 +150,7 @@ def register(body: Credentials):
     if not settings.auth_required:
         raise HTTPException(409, "Account mode is disabled")
     email = body.email.strip().lower()
-    if "@" not in email:
+    if not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
         raise HTTPException(422, "Enter an email address")
     from sqlalchemy.exc import IntegrityError
 
@@ -184,6 +185,7 @@ def login(body: Credentials, response: Response):
             or not account
         ):
             raise HTTPException(401, "Invalid email or password")
+        db.execute(delete(LoginSession).where(LoginSession.expires < datetime.now(timezone.utc)))
         token = secrets.token_urlsafe(32)
         db.add(
             LoginSession(

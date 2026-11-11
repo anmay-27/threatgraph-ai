@@ -11,6 +11,7 @@ import {
   client,
 } from "../components/shared";
 import Graph from "../Graph";
+import CaseAssessment, { type CaseAssessmentData } from '../components/CaseAssessment';
 import type { Analysis, Graph as GraphType } from "../types";
 type CaseRecord = {
   id: string;
@@ -23,6 +24,7 @@ type CaseRecord = {
   updated_at: string;
 };
 type Detail = CaseRecord & {
+  assessment: CaseAssessmentData;
   entities: {
     id: string;
     type: string;
@@ -140,6 +142,7 @@ export function CasePage() {
   const row = useQuery({
     queryKey: ["case", id],
     queryFn: () => api<Detail>("/cases/" + id),
+    refetchInterval: (query) => query.state.data?.analyses.some(a=>['QUEUED','PROCESSING'].includes(a.state)) ? 2500 : false,
   });
   const history = useQuery({
     queryKey: ["history", "case-picker"],
@@ -177,6 +180,7 @@ export function CasePage() {
         <Link to="/analyze">New investigation</Link>
       </div>
       {error && <ErrorBox error={error} />}
+      {c.assessment && <CaseAssessment caseId={c.id} data={c.assessment} />}
       <div className="tabs" role="tablist" aria-label="Case sections">
         {["Overview", "Analyses", "Threat graph", "Timeline", "Notes"].map(
           (t) => (

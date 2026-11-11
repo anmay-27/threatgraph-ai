@@ -42,7 +42,7 @@ def wrap_pdf_text(value, font, size, width=505):
     return output
 
 
-def render_pdf(title, identifier, analyses, entities=(), timeline=(), feedback_by_analysis=None):
+def render_pdf(title, identifier, analyses, entities=(), timeline=(), feedback_by_analysis=None, case_assessment=None):
     doc = fitz.open()
     page = None
     y = 0
@@ -105,6 +105,10 @@ def render_pdf(title, identifier, analyses, entities=(), timeline=(), feedback_b
 
     def image_context(report):
         evidence = report.get("evidence", [])
+        for clue in evidence:
+            if clue.get('label') == 'possible_visible_generation_mark':
+                heading('Visible origin clue — unverified')
+                line(clue.get('explanation', 'A possible decorative or generation mark was detected.'))
         model = next((e for e in evidence if e.get("source") == "image_detector" and isinstance(e.get("score"), (int, float))), None)
         if not model:
             heading("Image origin: insufficient model evidence")
@@ -157,6 +161,42 @@ def render_pdf(title, identifier, analyses, entities=(), timeline=(), feedback_b
             return False
 
     line(title, 18)
+    heading('Decision brief')
+    if case_assessment:
+        line(case_assessment['title'], 12)
+        for action in case_assessment['recommendations'][:2]: line('- '+action[:160])
+        line('Shared identifiers connect records; they do not establish operator identity or guilt.')
+    from app.services.decision import decision_summary
+    for row in analyses[:1]:
+        brief = decision_summary(row)
+        line(row['name'][:100], 12)
+        line(brief['title'])
+        for item in brief['findings'][:2]: line('Evidence: '+item['explanation'][:220])
+        for action in brief['actions'][:2]: line('Next: '+action[:220])
+        line('Unchecked or incomplete items: '+str(len(brief['gaps']))+' | Evidence conflicts: '+str(brief['conflict_count']))
+        for gap in brief['gaps'][:2]: line('Coverage gap: '+gap[:160])
+    line('Investigations in this export: '+str(len(analyses)))
+    line('AI-generated content alone does not establish maliciousness. Detailed evidence and limitations follow.')
+    page = None
+    y = 0
+    if case_assessment:
+        heading('Case investigation assessment')
+        line(case_assessment['title'])
+        line(case_assessment['scope'])
+        for scenario in case_assessment['scenarios']:
+            line(scenario['label'],12)
+            line(scenario['explanation'])
+            line('Investigation: '+scenario['analysis_id'])
+            line('Supporting evidence: '+', '.join(scenario.get('evidence_ids',[])))
+            line('Still to verify: '+ '; '.join(scenario.get('missing_evidence',[])))
+        for shared in case_assessment['correlations']:
+            line('Shared '+shared['entity_type']+': '+shared['value']+' | Other case: '+shared['case_title'])
+            line(shared['significance'])
+        heading('Recommended next actions')
+        for action in case_assessment['recommendations']:line(action)
+        heading('Case coverage and conflicts')
+        line(str(len(case_assessment['conflicts']))+' evidence conflicts recorded.')
+        for gap in case_assessment['gaps']:line(gap['reason'])
     line(("Analysis ID: " if title == "Investigation report" else "Case ID: ") + identifier)
     heading("Executive Summary")
     line(
@@ -365,6 +405,7 @@ def case_pdf(identifier: str):
         entities=entities.values(),
         timeline=case["timeline"],
         feedback_by_analysis=feedback,
+        case_assessment=case['assessment'],
     )
     return Response(
         data,

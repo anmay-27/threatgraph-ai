@@ -1,3 +1,5 @@
+import InvestigationJourney from "../components/InvestigationJourney";
+import Readiness from "../components/Readiness";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
@@ -11,7 +13,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Image, AudioLines, Globe, FileCheck2, X, Sparkles } from "lucide-react";
-import SignalOrb from "../components/SignalOrb";
+
 import { Link, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import type { Analysis } from "../types";
@@ -22,6 +24,7 @@ export default function Analyze() {
     [url, setUrl] = useState(""),
     [file, setFile] = useState<File | null>(null),
     [drag, setDrag] = useState(false);
+  const [selectedShortcut, setSelectedShortcut] = useState('');
   const input = useRef<HTMLInputElement>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [intent, setIntent] = useState("Explore a link or drop a file. Let’s follow the evidence.");
@@ -62,19 +65,10 @@ export default function Analyze() {
   });
   return (
     <>
-      <div className="page-intro">
-        <SignalOrb />
-        <span className="eyebrow">
-          <span className="tiny-line" />
-          YOUR DIGITAL TRUST WORKSPACE
-        </span>
-        <h1>
-          Investigate digital content<span className="hero-second">before you trust it.</span>
-        </h1>
-        <p>
-          {intent}
-        </p>
-      </div>
+      <section className="visual-hero" aria-label="Digital investigation workspace">
+        <div className="visual-hero-copy"><span className="eyebrow">THREATGRAPH / INVESTIGATION STUDIO</span><h1>Look closer.<br/><em>Connect the clues.</em></h1><p>Turn suspicious links, images and documents into evidence you can understand.</p><div className="hero-actions"><a className="hero-start" href="#investigation-input">Start investigating <ArrowRight size={17}/></a><Link to="/demo">See it in action <ArrowUpRight size={16}/></Link></div><div className="hero-trust"><ShieldCheck size={15}/> Local analysis <span>&middot;</span> Evidence-led findings</div></div>
+        <div className="visual-hero-art"><img src="/art/investigation-hero.png" alt="" fetchPriority="high" width="1536" height="1024"/><span className="art-caption">Every clue has a connection.</span></div>
+      </section>
       <div className="landing-actions">
         <Link to="/demo">First time? Try the guided demo <ArrowUpRight size={15}/></Link>
         <Link to="/messages">Analyze a suspicious message <ArrowUpRight size={15}/></Link>
@@ -86,9 +80,9 @@ export default function Analyze() {
           { icon: Globe, title: "Can I trust this link?", type: "url", accept: "", hint: "Paste a link to investigate its destination and connected evidence." },
           { icon: AudioLines, title: "Explore audio or video", type: "file", accept: "audio/*,video/*", hint: "Inspect media metadata and available detectors. Coverage is shown in your report." },
           { icon: FileCheck2, title: "Inspect a document", type: "file", accept: "", hint: "Upload a document to inspect its file properties and available evidence." },
-        ].map(({ icon: Icon, title, type, accept, hint }) => <button key={title} onClick={() => { setTab(type); setIntent(hint); requestAnimationFrame(() => { if (type === "file" && input.current) { input.current.accept = accept; input.current.click(); } else document.getElementById("url")?.focus(); }); }}><Icon size={19} /><span>{title}</span><ArrowUpRight size={14} /></button>)}
+        ].map(({ icon: Icon, title, type, accept, hint }, index) => <button key={title} aria-pressed={selectedShortcut===title} onClick={() => { setSelectedShortcut(title); setTab(type); setIntent(hint); requestAnimationFrame(() => { document.getElementById('investigation-input')?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}); if (type === "file" && input.current) { input.current.accept = accept; input.current.click(); } else document.getElementById("url")?.focus({preventScroll:true}); }); }}><Icon size={19} /><span><strong>{title}</strong><small>{['Image authenticity','Website & redirect checks','Experimental media checks','PDFs, files & hidden links'][index]}</small></span><ArrowUpRight size={14} /></button>)}
       </div>
-      <div className="submission-layout">
+      <div id="investigation-input" className="submission-layout">
         <section className="card submission">
           <div className="tabs" role="tablist" aria-label="Submission type">
             <button
@@ -118,7 +112,7 @@ export default function Analyze() {
           >
             {tab === "url" ? (
               <div className="input-area">
-                <label htmlFor="url">Where should we start?</label>
+                <label htmlFor="url">Where should we start?</label><p className="intent-hint" aria-live="polite">{intent}</p>
                 <div className="url-field">
                   <Link2 size={19} />
                   <input
@@ -193,29 +187,10 @@ export default function Analyze() {
             </div>
           </form>
         </section>
-        <aside className="scope-card">
-          <span className="eyebrow">BEYOND A SIMPLE VERDICT</span>
-          <h2>
-            See how the
-            <br />
-            signals connect.
-          </h2>
-          <div className="mini-graph" aria-hidden="true">
-            <span>URL</span>
-            <i />
-            <span>Content</span>
-            <i />
-            <span>Evidence</span>
-          </div>
-          <p>
-            Recursive analysis maps discovered assets, detector findings, and
-            conflicting evidence into an investigation graph.
-          </p>
-          <Link to="/about/methodology">
-            Explore the methodology <ArrowUpRight size={15} />
-          </Link>
-        </aside>
+        <aside className="case-story"><img src="/art/offer-investigation.png" alt="" loading="lazy" width="1536" height="1024"/><div><span className="eyebrow">TRY A REAL WORKFLOW</span><h2>A job offer.<br/>A hidden connection.</h2><p>Follow a fictional email through its attachment, QR code and shared payment identifier.</p><Link to="/demo">Explore the guided case <ArrowUpRight size={16}/></Link></div></aside>
       </div>
+      <Readiness/>
+      <InvestigationJourney/>
       <div className="composer-note"><Sparkles size={13} /> Real evidence. Transparent uncertainty. Your files stay local.</div>
       <div className="capabilities">
         {[

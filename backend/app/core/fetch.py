@@ -3,6 +3,8 @@
 import asyncio
 import ipaddress
 import socket
+import ssl
+import certifi
 import zlib
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit, urlunsplit
@@ -12,6 +14,14 @@ from aiohttp.abc import AbstractResolver
 
 class UnsafeURL(ValueError):
     pass
+
+
+def verified_tls_context():
+    # Retain platform trust and add the maintained public CA bundle on systems
+    # whose Python/OpenSSL installation cannot find a complete root store.
+    context = ssl.create_default_context()
+    context.load_verify_locations(cafile=certifi.where())
+    return context
 
 
 class BoundedBody:
@@ -129,7 +139,7 @@ async def fetch(url: str, max_bytes: int = 10 * 1024 * 1024) -> FetchResult:
     current = normalize_url(url)
     redirects = []
     resolver = PublicResolver()
-    connector = aiohttp.TCPConnector(resolver=resolver, use_dns_cache=False, limit=4)
+    connector = aiohttp.TCPConnector(resolver=resolver, use_dns_cache=False, limit=4, ssl=verified_tls_context())
     # trust_env=False prevents proxy environment variables bypassing DNS controls.
     async with asyncio.timeout(35):
         async with aiohttp.ClientSession(

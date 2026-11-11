@@ -20,8 +20,11 @@ class Settings(BaseSettings):
     task_always_eager: bool = False
     demo_data: bool = False
     clamav_host: str = ""
-    auth_required: bool = False
+    auth_required: bool = True
     secure_cookies: bool = False
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = "http://localhost:3000/api/v1/auth/google/callback"
     enable_browser_inspection: bool = False
     browser_channel: str = 'msedge'
 

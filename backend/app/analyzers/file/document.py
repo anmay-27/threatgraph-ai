@@ -25,7 +25,8 @@ def inspect_document(path, mime, asset):
                 if re.search(r'/(JavaScript|JS)\b', obj):
                     flag('pdf_javascript', 'PDF contains JavaScript actions. Scripts were not executed; review before opening in a script-enabled reader.', .65); break
             if doc.xref_length() > 10001: gaps.append('PDF object inspection limited to 10,000 objects.')
-            for page in list(doc)[:30]:
+            for page_index in range(min(len(doc), 30)):
+                page = doc[page_index]
                 text = page.get_text()[:20000]
                 if page.number < 10:
                     import numpy as np

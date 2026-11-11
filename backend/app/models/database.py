@@ -105,4 +105,7 @@ def serialize(row: Analysis) -> dict:
     if row.input_type == 'url' and row.report:
         from app.services.url_summary import summarize_url
         result['report'] = {**row.report, 'url_summary': summarize_url(row.name, row.report)}
+    if row.report:
+        from app.services.decision import decision_summary
+        result["report"] = {**result["report"], "decision_summary": decision_summary(result)}
     return result

@@ -206,8 +206,16 @@ def case_detail(identifier: str):
                 if p.get("timestamp")
             )
         timeline.sort(key=lambda e: str(e["created_at"]))
+        from app.services.case_assessment import assess_case
+        assessment = assess_case(db, identifier, analyses)
+        for correlation in assessment['correlations']:
+            target = 'case:' + correlation['case_id']
+            if not any(n['id'] == target for n in graph['nodes']):
+                graph['nodes'].append(dict(id=target, type='case', label=correlation['case_title']))
+            graph['edges'].append(dict(id=target+':shared:'+correlation['entity_id'], source='entity:'+correlation['entity_id'], target=target, relation='also_seen_in'))
         return {
             **case_dict(row),
+            "assessment": assessment,
             "entities": list(entities.values()),
             "analyses": [serialize(a) for a in analyses],
             "graph": graph,

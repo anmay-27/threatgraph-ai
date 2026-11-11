@@ -23,6 +23,7 @@ export type Graph = {
   edges: { id: string; source: string; target: string; relation: string }[];
 };
 export type Report = {
+  decision_summary?: import("./components/DecisionBrief").Decision;
   url_summary?: { title: string; meaning: string; observations: string[]; requested_data: string[]; actions: string[]; gaps: string[]; page_inspected: boolean; findings: { id: string; label: string; explanation: string }[] };
   checks?: { id: string; title: string; status: string; summary: string; evidence_ids: string[]; limitations: string; unavailable_reasons: string[] }[];
   risk_score: number | null;

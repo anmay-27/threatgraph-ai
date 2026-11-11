@@ -6,6 +6,20 @@ const entry = (values: Partial<Evidence>): Evidence => ({ id: "e", asset_id: "ro
 const metadata = entry({});
 const prediction = (score: number) => entry({ source: "image_detector", label: "synthetic_probability", score });
 describe("image authenticity assessment", () => {
+  it("uses the publisher cutoff rather than the generic 80 percent rule", () => {
+    const result = imageAssessment([metadata, entry({...prediction(.9),metadata:{calibration:'publisher_platt_scaling',threshold:.95,predicted_class:'real',verdict:'inconclusive'}})]);
+    expect(result.title).toContain('Uncertain');
+    expect(result.publisherCalibrated).toBe(true);
+    expect(result.explanation).toContain('publisher');
+  });
+  it("keeps a visible mark separate from provider verification and model scores", () => {
+    const result = imageAssessment([metadata, prediction(.03), entry({label: 'possible_visible_generation_mark'})]);
+    expect(result.title).toContain('Possible generation mark');
+    expect(result.explanation).toContain('not verified Gemini');
+    expect(result.score).toBe(.03);
+    const linked = imageAssessment([metadata, prediction(.03), entry({label: 'possible_visible_generation_mark', asset_id:'linked'})]);
+    expect(linked.title).toContain('likely non-AI');
+  });
   it("distinguishes upstream pretraining from local calibration", () => {
     const model = entry({...prediction(.95), metadata:{calibration:'temperature_scaling',pretrained_source:'OwensLab/commfor-model-384',predicted_class:'ai_generated',verdict:'likely_ai_generated'}});
     const result = imageAssessment([metadata,model]);

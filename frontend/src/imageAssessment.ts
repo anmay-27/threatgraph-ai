@@ -8,13 +8,15 @@ export function imageAssessment(evidence: Evidence[]) {
   const aiClaim = items.some((e) => e.label === "declared_ai_generation");
   const cameraClaim = items.some((e) => e.label === "trusted_camera_claim");
   const score = model?.score ?? null;
-  const calibrated = model?.metadata.calibration === "temperature_scaling";
+  const publisherCalibrated = model?.metadata.calibration === "publisher_platt_scaling";
+  const calibrated = model?.metadata.calibration === "temperature_scaling" || publisherCalibrated;
   const predictedAi = calibrated ? model?.metadata.predicted_class === "ai_generated" : score !== null && score >= 0.8;
   const predictedReal = calibrated ? model?.metadata.predicted_class === "real" : score !== null && score <= 0.2;
   const abstained = calibrated && model?.metadata.verdict === "inconclusive";
   const ood = model?.metadata.ood === "possibly_out_of_distribution";
   const unstable = model?.metadata.unstable === true;
   const classChanged = model?.metadata.stability_class_changed === true;
+  const visibleMark = items.find((e) => e.label === "possible_visible_generation_mark");
   const generation = items.find((e) => e.label === "generation_metadata");
   const metadata = items.find((e) => e.label === "image_metadata")?.metadata;
   const ocr = String(items.find((e) => e.label === "image_metadata")?.metadata.ocr || "");
@@ -50,15 +52,23 @@ export function imageAssessment(evidence: Evidence[]) {
     explanation = "The file contains explicit generation-tool metadata. This is a useful origin clue, even when the visual classifier misses it, but editable metadata cannot prove that the entire image was generated.";
   } else if (!conflict && !aiClaim && !cameraClaim && unstable) {
     title = "Unstable prediction — AI origin is uncertain";
-    explanation = classChanged ? "A flip or recompression changed which side of the model’s decision threshold this image falls on. The original probability is retained, but the class prediction is not stable." : "Small transformations changed the model’s AI score substantially. The original score is retained below, but this result should not be relied on as a clear AI/non-AI verdict.";
+    explanation = classChanged ? "A flip, recompression or full-layout check changed which side of the model’s decision threshold this image falls on. The original probability is retained, but the class prediction is not stable." : "Small transformations changed the model’s AI score substantially. The original score is retained below, but this result should not be relied on as a clear AI/non-AI verdict.";
+  }
+  if (publisherCalibrated && !conflict && !aiClaim && !cameraClaim && !documentLike) {
+    explanation = "This pretrained detector was fine-tuned on OpenFake and newer generators by its publisher. It uses the publisher's score scaling and 95% cutoff, not a locally fitted probability. Its score is a screening signal, not proof of origin.";
+  }
+  if (!conflict && !aiClaim && !cameraClaim && !generation && visibleMark && !predictedAi) {
+    title = "Possible generation mark ? verify image origin";
+    explanation = "A sparkle-like symbol was detected near a bottom corner. It can be a generation mark or decorative logo; this is not verified Gemini attribution or SynthID detection. The visual-model score below is separate and can miss AI-generated content.";
   }
   return {
-    title, explanation, score, model, calibrated, abstained,
+    title, explanation, score, model, calibrated, publisherCalibrated, abstained,
     diagnostics: (model?.metadata.stability_checks || []) as { name: string; score: number }[],
     observations: [
+      ...(visibleMark ? ["Visible clue: a four-point sparkle-like shape near a bottom corner. Unverified; inspect the original and its creation history."] : []),
       generation ? `Generation metadata: ${(generation.metadata.markers || []).join("; ")}. These fields can be edited.` : "No explicit generation-tool metadata was detected in this report. Many generators remove it, so absence is not evidence of a real photograph.",
-      metadata ? `Inspected ${metadata.width} × ${metadata.height} pixels (${metadata.encoding || "image"}). The classifier resizes the image; fine details may be lost.` : "Image dimensions were not available.",
-      classChanged ? "At least one flip/recompression check changed the predicted class, even if the score difference was small." : unstable ? "The score varies by at least 25 percentage points under flip/recompression checks. This is a sensitivity warning, not an accuracy measurement." : model?.metadata.stability_checks?.length ? "The tested transformations did not trigger the sensitivity warning. A stable model can still be wrong." : "Transformation stability was not tested in this saved report. Rerun with the updated detector to check it.",
+      metadata ? `Inspected ${metadata.width} × ${metadata.height} pixels (${metadata.encoding || "image"}). The primary classifier resizes and center-crops the image; edge marks and fine details may be excluded. A full-layout check, when available, is diagnostic only.` : "Image dimensions were not available.",
+      classChanged ? "At least one flip/recompression/full-layout check changed the predicted class, even if the score difference was small." : unstable ? "The score varies by at least 25 percentage points under flip/recompression checks. This is a sensitivity warning, not an accuracy measurement." : model?.metadata.stability_checks?.length ? "The tested transformations did not trigger the sensitivity warning. A stable model can still be wrong." : "Transformation stability was not tested in this saved report. Rerun with the updated detector to check it.",
     ],
     modelSuggestion: score === null ? null : predictedAi ? "Model leans AI-generated" : predictedReal ? "Model leans non-AI" : "Model has no clear preference",
     reasons: [

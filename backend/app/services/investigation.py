@@ -247,6 +247,12 @@ class Investigation:
                     path.read_bytes(), url or "https://uploaded.invalid/", node
                 )
                 self.evidence.extend(found)
+                # Extract declared page text and payment links without navigating
+                # arbitrary anchors or submitting any forms.
+                declared = page.get('text', '') + '\n' + '\n'.join(v for v in page.get('links', []) if v.lower().startswith('upi://'))
+                self.evidence.extend(inspect_message(declared, node))
+                for entity_kind, value in extract_text(declared):
+                    self.graph.edge(node, self.graph.node(entity_kind.lower(), value), 'mentions')
                 self.evidence.append(
                     finding(
                         node,
@@ -312,9 +318,9 @@ class Investigation:
             )
 
     def report(self):
-        from app.services.scenarios import additional_scenarios
+        from app.services.scenarios import additional_scenarios, chain_scenarios
 
-        for scenario in additional_scenarios(self.evidence):
+        for scenario in additional_scenarios(self.evidence) + chain_scenarios(self.evidence, self.graph):
             self.evidence.append(
                 finding(
                     scenario["asset_id"],
