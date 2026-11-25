@@ -1,0 +1,42 @@
+{
+  "name": "video",
+  "version": "videomae-ffpp-8456c9f-research",
+  "architecture": "VideoMAE-base",
+  "threshold": 0.5,
+  "file_path": "videomae-ffpp/model.safetensors",
+  "runtime": "huggingface_video",
+  "calibration": "none",
+  "deployment_status": "experimental_unvalidated",
+  "training_dataset": "FaceForensics++ C23 subset (publisher claim)",
+  "limitation": "Third-party mirror; original author repository inaccessible. Publisher metrics not independently reproduced. Sixteen sampled whole frames; facial-video domain only. No pixel localization or audio verification. Experimental screening, not forensic proof.",
+  "source": {
+    "repository": "SoraExplora/VideoMae",
+    "revision": "8456c9f29444cda60484d5403513d1bc695fb1ad",
+    "license": "MIT (mirror declaration)",
+    "provenance": "Mirror attributes training to Vansh180/VideoMae-deepfake-detector; original repository was inaccessible. Publisher metrics are not independently verified.",
+    "files": [
+      {
+        "file": "README.md",
+        "sha256": "80f307242f640ae4ad9c945745303e0e1a7e61c2c49322d9b6cca30e6948c23e",
+        "bytes": 5174
+      },
+      {
+        "file": "config.json",
+        "sha256": "3f022d107fd4b4d2e848189696281f7e7cec54447016bd9632a5b91be2879163",
+        "bytes": 825
+      },
+      {
+        "file": "preprocessor_config.json",
+        "sha256": "4bc9b255ff212041bc28127d4fa0ae1630abca52bb2d882f3e4c0b9e5b763f06",
+        "bytes": 415
+      },
+      {
+        "file": "model.safetensors",
+        "sha256": "293c668a5d3289d3162902d8cac6687cd11551cf2358768bad126de32b6d7f29",
+        "bytes": 344937328
+      }
+    ]
+  },
+  "validation_metrics": null,
+  "test_metrics": null
+}

@@ -6,7 +6,7 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 DIRECTORIES = ('backend', 'frontend', 'ml', 'scripts', 'docker', 'browser-extension')
-FILES = ('README.md', '.gitignore', '.dockerignore', '.env.example', 'docker-compose.yml', 'pytest.ini')
+FILES = ('README.md', '.gitignore', '.dockerignore', '.env.example', 'docker-compose.yml', 'pytest.ini', 'render.yaml')
 EXCLUDED = {'node_modules', 'dist', '__pycache__', '.pytest_cache', '.ruff_cache', 'test-results', 'playwright-report'}
 SUFFIXES = {'.pyc', '.db', '.log', '.pem', '.key', '.p12', '.pfx', '.pt', '.safetensors', '.joblib'}
 

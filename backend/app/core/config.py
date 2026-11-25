@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     task_always_eager: bool = False
     demo_data: bool = False
     clamav_host: str = ""
+    analysis_workers: int = 2
     auth_required: bool = True
     secure_cookies: bool = False
     google_client_id: str = ""

@@ -34,16 +34,23 @@ from app.services.operations import router as operations_router
 from app.services.feedback import router as feedback_router
 from app.services.jobs import router as jobs_router
 
-executor = ThreadPoolExecutor(max_workers=2)
+executor = ThreadPoolExecutor(max_workers=max(1, min(settings.analysis_workers, 4)))
 
 
 @asynccontextmanager
 async def lifespan(app):
     global executor
-    executor = ThreadPoolExecutor(max_workers=2)
+    executor = ThreadPoolExecutor(max_workers=max(1, min(settings.analysis_workers, 4)))
     # Local SQLite convenience. Production uses Alembic before server startup.
     if settings.database_url.startswith("sqlite"):
         Base.metadata.create_all(engine)
+    if settings.task_always_eager:
+        # The single-process executor cannot retain running jobs across restarts.
+        from sqlalchemy import update
+        with Session() as db:
+            db.execute(update(Analysis).where(Analysis.state.in_(['QUEUED', 'PROCESSING'])).values(
+                state='FAILED', error='Server restarted during analysis. Retry this investigation.'))
+            db.commit()
 
     async def retention_loop():
         from app.workers.tasks import cleanup

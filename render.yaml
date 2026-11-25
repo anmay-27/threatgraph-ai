@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: threatgraph-ai
+    runtime: docker
+    repo: https://github.com/anmay-27/threatgraph-ai
+    branch: main
+    region: singapore
+    plan: standard
+    dockerfilePath: ./docker/hosted.Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: "off"
+    disk:
+      name: threatgraph-data
+      mountPath: /app/storage
+      sizeGB: 5
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////app/storage/threatgraph.db
+      - key: STORAGE_DIR
+        value: /app/storage
+      - key: MODEL_DIR
+        value: /app/models
+      - key: AUTH_REQUIRED
+        value: "true"
+      - key: SECURE_COOKIES
+        value: "true"
+      - key: TASK_ALWAYS_EAGER
+        value: "true"
+      - key: ANALYSIS_WORKERS
+        value: "1"
+      - key: PRIVACY_MODE
+        value: "true"
+      - key: ENABLE_EXTERNAL_REPUTATION
+        value: "false"
+      - key: MAX_UPLOAD_MB
+        value: "50"
+      - key: ALLOWED_ORIGINS
+        value: https://threatgraph-ai.onrender.com

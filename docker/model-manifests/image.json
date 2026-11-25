@@ -1,0 +1,97 @@
+{
+  "name": "image",
+  "version": "image-detector-v5-openfake-experimental",
+  "architecture": "OpenFake fine-tuned ViT-S/16, quantized ONNX",
+  "runtime": "openfake_onnx",
+  "file_path": "detectra-openfake/model.onnx",
+  "sha256": "b5bd0fd699469b721b00f6a5626a2616b2b0a34283eece124d90451147ab7fc6",
+  "threshold": 0.95,
+  "calibration": "publisher_platt_scaling",
+  "deployment_status": "experimental_local",
+  "classes": {
+    "0": "real",
+    "1": "ai_generated"
+  },
+  "source": {
+    "repository": "s-gehring/detectra-openfake",
+    "revision": "c84565e5bf8969d95908e12844f551e77ae87105",
+    "license": "CC-BY-NC-4.0; additional upstream terms documented in model card"
+  },
+  "training_dataset": "Publisher OpenFake fine-tuning with modern generators, photos, paintings and charts; no local fine-tuning of this checkpoint",
+  "regression_metrics": {
+    "poster": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "balanced_accuracy": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier": 0.04934363481908459,
+      "ece": 0.10586977378715778,
+      "false_positive_rate": 0.0,
+      "eer": 0.0,
+      "confusion_matrix": [
+        [
+          20,
+          0
+        ],
+        [
+          0,
+          20
+        ]
+      ],
+      "count": 40
+    },
+    "modern": {
+      "accuracy": 1.0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "balanced_accuracy": 1.0,
+      "roc_auc": 1.0,
+      "pr_auc": 1.0,
+      "brier": 0.040451887847851566,
+      "ece": 0.09007035396785631,
+      "false_positive_rate": 0.0,
+      "eer": 0.0,
+      "confusion_matrix": [
+        [
+          20,
+          0
+        ],
+        [
+          0,
+          20
+        ]
+      ],
+      "count": 40
+    },
+    "diverse": {
+      "accuracy": 0.8,
+      "precision": 1.0,
+      "recall": 0.6,
+      "f1": 0.75,
+      "balanced_accuracy": 0.8,
+      "roc_auc": 0.9924999999999999,
+      "pr_auc": 0.9934782608695651,
+      "brier": 0.03477958655213091,
+      "ece": 0.08263855937431468,
+      "false_positive_rate": 0.0,
+      "eer": 0.025000000000000022,
+      "confusion_matrix": [
+        [
+          20,
+          0
+        ],
+        [
+          8,
+          12
+        ]
+      ],
+      "count": 40
+    }
+  },
+  "experiment": "research\\experiments\\openfake-pretrained",
+  "limitation": "Noncommercial research detector. Publisher scaling and 95% cutoff, not locally calibrated. Local diagnostic sample: 112/120 binary decisions correct; 0/60 real images flagged, 8/60 AI images missed. Previously examined datasets; possible upstream overlap. Abstention can reduce coverage. Not representative field accuracy or proof of origin. Images remain local."
+}
