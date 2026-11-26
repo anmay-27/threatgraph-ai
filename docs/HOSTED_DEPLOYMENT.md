@@ -2,7 +2,7 @@
 
 The active render.yaml now uses Render Free with docker/free.Dockerfile, no paid disk, one analysis worker and a 10 MB upload limit. Accounts and investigations are ephemeral: they may disappear on restart/redeployment. Export important reports. A banner explains these limits on the hosted site.
 
-This profile supports lightweight URL, message, PDF/Office, QR and evidence workflows. FFmpeg and Tesseract are installed. Heavy image/video/audio classifiers and antivirus scanning are unavailable. Google sign-in requires cloud environment credentials and the final HTTPS callback registered in Google Cloud; password signup works without them.
+This profile supports lightweight URL, message, PDF/Office, QR and evidence workflows. FFmpeg and Tesseract are installed. The pinned quantized OpenFake image classifier is installed with ONNX memory arenas disabled and one inference thread. Video/audio classifiers and antivirus scanning remain unavailable. Google sign-in requires cloud environment credentials and the final HTTPS callback registered in Google Cloud; password signup works without them.
 
 The paid full-model Dockerfile remains available for future use but is not selected by the active Blueprint. No paid resources are authorized for this deployment.
 
@@ -11,7 +11,7 @@ The paid full-model Dockerfile remains available for future use but is not selec
 
 The Render Blueprint creates one Singapore web service using the Standard (1 CPU, 2 GB) plan and a 5 GB disk. Published base pricing checked during preparation: $25/month compute plus $1.25/month disk, excluding taxes, extra bandwidth and build usage. This is an initial demonstration configuration; memory and latency must be checked on the live service before claiming capacity. Analysis concurrency is one and uploads are limited to 50 MB on this hosted profile.
 
-The container builds the frontend, installs FFmpeg and Tesseract, downloads the pinned image and video checkpoints with checksum verification, and serves the frontend and API on the same HTTPS origin. The image weights retain their noncommercial license. Model cards are downloaded with the weights. No audio authenticity checkpoint is installed; video remains experimental. No antivirus service is included in this initial profile, so malware signature coverage will be shown as unavailable. Static URL/document checks still run.
+The container builds the frontend, installs FFmpeg and Tesseract, downloads the pinned image and video checkpoints with checksum verification, and serves the frontend and API on the same HTTPS origin. The image weights retain their noncommercial license. Model cards are downloaded with the weights. No audio authenticity checkpoint is installed; video remains experimental in the optional paid profile. No antivirus service is included in this initial profile, so malware signature coverage will be shown as unavailable. Static URL/document checks still run.
 
 Accounts, session hashes, investigations and uploads are stored on the disk under /app/storage. Local laptop data is not copied. The SQLite profile is limited to one service instance. Deployments interrupt active analyses; those jobs become failed and can be retried. Export important reports and make database-aware backups; disk snapshots alone are not a tested database recovery procedure.
 

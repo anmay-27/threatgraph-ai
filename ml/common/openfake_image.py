@@ -2,6 +2,7 @@
 from functools import lru_cache
 from pathlib import Path
 import math
+import os
 import numpy as np
 from PIL import Image, ImageOps
 
@@ -12,6 +13,10 @@ def load(path, modified):
     options = ort.SessionOptions()
     options.intra_op_num_threads = 4
     options.inter_op_num_threads = 1
+    if os.environ.get('ONNX_LOW_MEMORY') == 'true':
+        options.intra_op_num_threads = 1
+        options.enable_cpu_mem_arena = False
+        options.enable_mem_pattern = False
     return ort.InferenceSession(path, sess_options=options, providers=['CPUExecutionProvider'])
 
 

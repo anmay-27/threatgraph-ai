@@ -2,6 +2,7 @@
 import hashlib
 import json
 import shutil
+import argparse
 from pathlib import Path
 import requests
 
@@ -21,7 +22,10 @@ def download(url, path, expected):
 
 
 def main():
-    for modality in ('image', 'video'):
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--modalities', nargs='+', choices=('image', 'video'), default=['image', 'video'])
+    args = parser.parse_args()
+    for modality in args.modalities:
         source = Path('docker/model-manifests') / (modality + '.json')
         record = json.loads(source.read_text())
         root = Path('models') / modality
