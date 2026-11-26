@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 from fastapi import HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 if os.environ.get('RENDER_EXTERNAL_URL'):
     origin = os.environ['RENDER_EXTERNAL_URL'].rstrip('/')
     os.environ['ALLOWED_ORIGINS'] = origin
@@ -24,6 +24,10 @@ def frontend(requested: str):
         return FileResponse(target)
     if Path(requested).suffix:
         raise HTTPException(404)
+    if os.environ.get('FREE_DEMO') == 'true':
+        html = (DIST / 'index.html').read_text()
+        notice = '<aside role="note" style="padding:12px;background:#473619;color:#fff;text-align:center;font:14px sans-serif">Free demo: accounts and investigations may reset after restart. Export reports before leaving. AI image/video/audio detectors and antivirus scanning are unavailable. Upload limit: 10 MB.</aside>'
+        return HTMLResponse(html.replace('<body>', '<body>' + notice), headers={'Cache-Control': 'no-store'})
     return FileResponse(DIST / 'index.html', headers={'Cache-Control': 'no-cache'})
 
 

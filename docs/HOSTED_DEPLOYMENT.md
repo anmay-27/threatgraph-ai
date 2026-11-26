@@ -1,4 +1,13 @@
-# Noncommercial hosted MVP
+# Free hosted demo
+
+The active render.yaml now uses Render Free with docker/free.Dockerfile, no paid disk, one analysis worker and a 10 MB upload limit. Accounts and investigations are ephemeral: they may disappear on restart/redeployment. Export important reports. A banner explains these limits on the hosted site.
+
+This profile supports lightweight URL, message, PDF/Office, QR and evidence workflows. FFmpeg and Tesseract are installed. Heavy image/video/audio classifiers and antivirus scanning are unavailable. Google sign-in requires cloud environment credentials and the final HTTPS callback registered in Google Cloud; password signup works without them.
+
+The paid full-model Dockerfile remains available for future use but is not selected by the active Blueprint. No paid resources are authorized for this deployment.
+
+## Earlier paid configuration reference
+
 
 The Render Blueprint creates one Singapore web service using the Standard (1 CPU, 2 GB) plan and a 5 GB disk. Published base pricing checked during preparation: $25/month compute plus $1.25/month disk, excluding taxes, extra bandwidth and build usage. This is an initial demonstration configuration; memory and latency must be checked on the live service before claiming capacity. Analysis concurrency is one and uploads are limited to 50 MB on this hosted profile.
 

@@ -5,15 +5,11 @@ services:
     repo: https://github.com/anmay-27/threatgraph-ai
     branch: main
     region: singapore
-    plan: standard
-    dockerfilePath: ./docker/hosted.Dockerfile
+    plan: free
+    dockerfilePath: ./docker/free.Dockerfile
     dockerContext: .
     healthCheckPath: /api/v1/health
     autoDeployTrigger: "off"
-    disk:
-      name: threatgraph-data
-      mountPath: /app/storage
-      sizeGB: 5
     envVars:
       - key: DATABASE_URL
         value: sqlite:////app/storage/threatgraph.db
@@ -34,6 +30,8 @@ services:
       - key: ENABLE_EXTERNAL_REPUTATION
         value: "false"
       - key: MAX_UPLOAD_MB
-        value: "50"
+        value: "10"
       - key: ALLOWED_ORIGINS
         value: https://threatgraph-ai.onrender.com
+      - key: FREE_DEMO
+        value: "true"
